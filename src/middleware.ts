@@ -33,14 +33,27 @@ export default clerkMiddleware((auth, req) => {
     (a.sessionClaims as any)?.metadata?.role ??
     undefined;
 
+  const pathname = new URL(req.url).pathname;
+
   // Helper to stamp debug headers on a response
   const withDebug = (res: NextResponse) => {
-    res.headers.set("x-mw-path", new URL(req.url).pathname);
+    res.headers.set("x-mw-path", pathname);
     res.headers.set("x-mw-public", String(isPublic(req)));
     res.headers.set("x-mw-user", String(a.userId ?? "null"));
     res.headers.set("x-mw-role", String(role ?? "none"));
     return res;
   };
+
+  // Debug logging for admin routes
+  if (pathname.startsWith("/admin")) {
+    console.log("🔍 Middleware /admin:", {
+      path: pathname,
+      userId: a.userId ? "EXISTS" : "NULL",
+      role: role || "NONE",
+      isPublic: isPublic(req),
+      requiresAdmin: requiresAdmin(req),
+    });
+  }
 
   // Public routes → straight through
   if (isPublic(req)) {
@@ -49,6 +62,7 @@ export default clerkMiddleware((auth, req) => {
 
   // Check if user is signed in
   if (!a.userId) {
+    console.log("❌ No userId, redirecting to sign-in");
     const url = new URL("/sign-in", req.url);
     url.searchParams.set("redirect_url", req.url);
     return withDebug(NextResponse.redirect(url));
@@ -57,9 +71,11 @@ export default clerkMiddleware((auth, req) => {
   // Admin gate - check role BEFORE any other redirects
   if (requiresAdmin(req)) {
     if (role !== "admin") {
+      console.log("❌ Admin required but role is:", role, "- redirecting to home");
       const url = new URL("/", req.url);
       return withDebug(NextResponse.redirect(url));
     }
+    console.log("✅ Admin access granted");
   }
 
   // All other protected routes → user is signed in, allow through
