@@ -32,6 +32,10 @@ const isPublic = createRouteMatcher([
   "/api/debug-auth",
   "/api/debug-user",
   "/api/check-keys",
+  // Admin API routes (protected at API level, not middleware)
+  "/api/admin/(.*)",
+  "/api/orders",
+  "/api/orders/(.*)",
 ]);
 
 const requiresAccount = createRouteMatcher(["/account(.*)"]);
