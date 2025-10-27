@@ -21,6 +21,7 @@ const isPublic = createRouteMatcher([
   "/api/clover-products-test",
   "/api/debug-auth",
   "/api/debug-user",
+  "/api/check-keys",
 ]);
 
 const requiresAccount = createRouteMatcher(["/account(.*)"]);
