@@ -74,8 +74,11 @@ export default clerkMiddleware((auth, req) => {
 
   // Public routes → straight through
   if (isPublic(req)) {
+    console.log("✅ Public route, allowing through:", pathname);
     return withDebug(NextResponse.next());
   }
+
+  console.log("⚠️ NOT public route:", pathname, "isPublic:", isPublic(req));
 
   // Check if user is signed in
   if (!a.userId) {
