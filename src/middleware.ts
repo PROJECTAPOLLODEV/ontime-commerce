@@ -13,6 +13,10 @@ const isPublic = createRouteMatcher([
   "/sign-up(.*)",
   "/sign-out(.*)",
   "/debug",
+  // TEMPORARY WORKAROUND: Make admin/account public, protect at page level instead
+  // Middleware auth() is broken with Next.js 15, so we use page-level protection
+  "/admin(.*)",
+  "/account(.*)",
   // debug/test while building
   "/api/ping",
   "/api/products",
