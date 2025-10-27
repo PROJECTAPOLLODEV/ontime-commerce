@@ -4,15 +4,25 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isPublic = createRouteMatcher([
   "/",
   "/shop",
-  "/product(.*)",
+  "/shop/(.*)",
+  "/product/(.*)",
   "/cart",
   "/checkout",
   "/success",
   "/cancel",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/sign-out(.*)",
+  "/sign-in",
+  "/sign-in/(.*)",
+  "/sign-up",
+  "/sign-up/(.*)",
+  "/sign-out",
+  "/sign-out/(.*)",
   "/debug",
+  // TEMPORARY WORKAROUND: Make admin/account public, protect at page level instead
+  // Middleware auth() is broken with Next.js 15, so we use page-level protection
+  "/admin",
+  "/admin/(.*)",
+  "/account",
+  "/account/(.*)",
   // debug/test while building
   "/api/ping",
   "/api/products",
@@ -70,8 +80,11 @@ export default clerkMiddleware((auth, req) => {
 
   // Public routes → straight through
   if (isPublic(req)) {
+    console.log("✅ Public route, allowing through:", pathname);
     return withDebug(NextResponse.next());
   }
+
+  console.log("⚠️ NOT public route:", pathname, "isPublic:", isPublic(req));
 
   // Check if user is signed in
   if (!a.userId) {
