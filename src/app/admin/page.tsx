@@ -6,9 +6,28 @@ export default async function AdminPage() {
   const user = await currentUser();
   const role = (user?.publicMetadata as any)?.role;
 
-  if (!user) return null; // middleware handles redirect
+  // Debug output
+  console.log("Admin Page - User:", user ? user.id : "null");
+  console.log("Admin Page - Role:", role);
+
+  if (!user) {
+    return (
+      <div className="rounded-lg border bg-yellow-50 p-6 dark:bg-yellow-900/20">
+        <h2 className="text-lg font-semibold">Debug: No User Found</h2>
+        <p className="text-sm">currentUser() returned null</p>
+      </div>
+    );
+  }
+
   if (role !== "admin") {
-    return <div className="text-sm text-muted-foreground">Admin only.</div>;
+    return (
+      <div className="rounded-lg border bg-yellow-50 p-6 dark:bg-yellow-900/20">
+        <h2 className="text-lg font-semibold">Debug: Not Admin</h2>
+        <p className="text-sm">Role: {role || "undefined"}</p>
+        <p className="text-sm">User ID: {user.id}</p>
+        <pre className="mt-2 text-xs">{JSON.stringify(user.publicMetadata, null, 2)}</pre>
+      </div>
+    );
   }
 
   return (
