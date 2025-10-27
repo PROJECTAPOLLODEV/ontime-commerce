@@ -29,12 +29,24 @@ const requiresAdmin   = createRouteMatcher(["/admin(.*)"]);
 
 export default clerkMiddleware((auth, req) => {
   const a = auth();
+  const pathname = new URL(req.url).pathname;
+
+  // Detailed debug logging for protected routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/account")) {
+    console.log("🔍 Clerk auth() result:", {
+      path: pathname,
+      userId: a.userId || "NULL",
+      sessionId: a.sessionId || "NULL",
+      orgId: a.orgId || "NULL",
+      hasSessionClaims: !!a.sessionClaims,
+      sessionClaimsKeys: a.sessionClaims ? Object.keys(a.sessionClaims) : [],
+    });
+  }
+
   const role =
     (a.sessionClaims as any)?.publicMetadata?.role ??
     (a.sessionClaims as any)?.metadata?.role ??
     undefined;
-
-  const pathname = new URL(req.url).pathname;
 
   // Helper to stamp debug headers on a response
   const withDebug = (res: NextResponse) => {
