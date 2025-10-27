@@ -12,6 +12,7 @@ const isPublic = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sign-out(.*)",
+  "/debug",
   // debug/test while building
   "/api/ping",
   "/api/products",
