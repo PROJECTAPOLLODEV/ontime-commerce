@@ -47,30 +47,22 @@ export default clerkMiddleware((auth, req) => {
     return withDebug(NextResponse.next());
   }
 
-  // Prefer Clerk's built-in guard
-  // @ts-ignore
-  if (typeof (a as any).protect === "function") {
-    // @ts-ignore
-    const maybe = (a as any).protect();
-    if (maybe) return withDebug(maybe);
-  } else {
-    // Manual guard for older Clerk
-    if (!a.userId) {
-      const url = new URL("/sign-in", req.url);
-      url.searchParams.set("redirect_url", req.url);
+  // Check if user is signed in
+  if (!a.userId) {
+    const url = new URL("/sign-in", req.url);
+    url.searchParams.set("redirect_url", req.url);
+    return withDebug(NextResponse.redirect(url));
+  }
+
+  // Admin gate - check role BEFORE any other redirects
+  if (requiresAdmin(req)) {
+    if (role !== "admin") {
+      const url = new URL("/", req.url);
       return withDebug(NextResponse.redirect(url));
     }
   }
 
-  // Admin gate
-  if (requiresAdmin(req)) {
-    if (role !== "admin") {
-      const res = new NextResponse("Forbidden (admin only)", { status: 403 });
-      return withDebug(res);
-    }
-  }
-
-  // Account requires sign-in only (already ensured)
+  // All other protected routes → user is signed in, allow through
   return withDebug(NextResponse.next());
 });
 
