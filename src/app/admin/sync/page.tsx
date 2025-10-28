@@ -6,11 +6,13 @@ export default function AdminSyncPage() {
   const [syncing, setSyncing] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   const syncAllPages = async () => {
     setSyncing(true);
     setError(null);
     setResults([]);
+    setProgress({ current: 0, total: 0 });
 
     try {
       // First, get page 1 to see total pages
@@ -25,16 +27,18 @@ export default function AdminSyncPage() {
 
       const allResults = [firstData];
       const totalPages = firstData.totalPages || 1;
+      setProgress({ current: 1, total: totalPages });
 
-      // Sync remaining pages
-      for (let page = 2; page <= Math.min(totalPages, 10); page++) {
+      // Sync remaining pages - ALL of them
+      for (let page = 2; page <= totalPages; page++) {
         const resp = await fetch(`/api/clover-sync?page=${page}`);
         const data = await resp.json();
         allResults.push(data);
         setResults([...allResults]);
+        setProgress({ current: page, total: totalPages });
 
         // Small delay to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
 
       setResults(allResults);
@@ -89,9 +93,28 @@ export default function AdminSyncPage() {
             disabled={syncing}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
-            {syncing ? "Syncing..." : "Sync First 10 Pages"}
+            {syncing ? "Syncing..." : "Sync All Products"}
           </button>
         </div>
+
+        {syncing && progress.total > 0 && (
+          <div className="mt-4">
+            <div className="mb-2 flex justify-between text-sm">
+              <span className="text-muted-foreground">Progress</span>
+              <span className="font-medium">
+                Page {progress.current} of {progress.total}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{
+                  width: `${(progress.current / progress.total) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-900/20 dark:text-red-400">

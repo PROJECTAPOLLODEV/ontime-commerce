@@ -11,7 +11,6 @@ interface ProductCardProps {
     price_amount: number;
     image?: string;
     images?: string[];
-    imagesDetails?: { url: string }[];
   };
 }
 
@@ -21,7 +20,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const imgSrc =
     product.image ||
     (Array.isArray(product.images) && product.images[0]) ||
-    (Array.isArray(product.imagesDetails) && product.imagesDetails[0]?.url) ||
     "/placeholder.png";
 
   const handleAddToCart = async (e: React.MouseEvent) => {
