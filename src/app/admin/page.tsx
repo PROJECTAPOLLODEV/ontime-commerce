@@ -137,7 +137,7 @@ export default async function AdminPage() {
       )}
 
       {/* Quick Actions Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <a
           href="/admin/products"
           className="group relative overflow-hidden rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-lg hover:border-primary/50 hover:-translate-y-1"
@@ -308,6 +308,51 @@ export default async function AdminPage() {
           </p>
           <div className="mt-4 flex items-center text-sm font-medium text-primary">
             Sync Products
+            <svg
+              className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+        </a>
+
+        <a
+          href="/admin/homepage"
+          className="group relative overflow-hidden rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-lg hover:border-primary/50 hover:-translate-y-1"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/30">
+              <svg
+                className="h-6 w-6 text-pink-600 dark:text-pink-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+            </div>
+          </div>
+          <h3 className="mt-4 text-lg font-semibold group-hover:text-primary">
+            Homepage
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Customize homepage content, features, and products
+          </p>
+          <div className="mt-4 flex items-center text-sm font-medium text-primary">
+            Edit Homepage
             <svg
               className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
               fill="none"

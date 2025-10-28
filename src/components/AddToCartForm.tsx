@@ -17,27 +17,34 @@ export default function AddToCartForm({ productId }: AddToCartFormProps) {
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("productId", productId);
-      formData.append("quantity", String(quantity));
-
       const response = await fetch("/api/cart", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        }),
       });
 
       if (response.ok) {
         // Show success feedback
         const button = e.currentTarget.querySelector("button[type='submit']");
         if (button) {
+          const originalText = button.textContent;
           button.textContent = "Added!";
           setTimeout(() => {
-            button.textContent = "Add to Cart";
+            button.textContent = originalText;
           }, 2000);
         }
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add to cart");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding to cart:", error);
+      alert(`Failed to add to cart: ${error.message}`);
     } finally {
       setLoading(false);
     }

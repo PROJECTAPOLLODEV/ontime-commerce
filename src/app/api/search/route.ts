@@ -24,11 +24,22 @@ export async function GET(req: NextRequest) {
         { category: { $regex: q, $options: "i" } },
       ],
     })
-      .select("title slug price_amount image")
+      .select("title slug price_amount image images brand category")
       .limit(limit)
       .lean();
 
-    return NextResponse.json({ products });
+    // Serialize for client
+    const serialized = products.map((p: any) => ({
+      _id: String(p._id),
+      title: p.title || "",
+      slug: p.slug || "",
+      price_amount: p.price_amount || 0,
+      image: p.image || (Array.isArray(p.images) && p.images[0]) || "",
+      brand: p.brand || "",
+      category: p.category || "",
+    }));
+
+    return NextResponse.json({ products: serialized });
   } catch (err: any) {
     console.error("Search API error:", err);
     return NextResponse.json(
