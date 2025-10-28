@@ -15,6 +15,8 @@ interface Product {
   slug?: string;
   price_amount: number;
   image?: string;
+  brand?: string;
+  category?: string;
 }
 
 export default function SearchAutocomplete({
@@ -125,40 +127,74 @@ export default function SearchAutocomplete({
         </button>
       </form>
 
-      {/* Suggestions Dropdown */}
+      {/* Suggestions Dropdown - Amazon-style */}
       {showSuggestions && (suggestions.length > 0 || loading) && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-96 overflow-y-auto rounded-md border bg-popover shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[500px] overflow-y-auto rounded-lg border-2 border-primary/20 bg-popover shadow-2xl backdrop-blur-sm">
           {loading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Searching...
+            <div className="flex items-center justify-center gap-2 p-6">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+              <span className="text-sm font-medium text-muted-foreground">Searching products...</span>
+            </div>
+          ) : suggestions.length === 0 ? (
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <svg className="h-6 w-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-muted-foreground">No products found for "{q}"</p>
+              <p className="mt-1 text-xs text-muted-foreground">Try adjusting your search terms</p>
             </div>
           ) : (
             <>
+              <div className="border-b bg-muted/30 px-4 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {suggestions.length} {suggestions.length === 1 ? 'Product' : 'Products'} Found
+                </p>
+              </div>
               {suggestions.map((product, idx) => (
                 <Link
                   key={product._id}
                   href={`/product/${product.slug || product._id}`}
                   onClick={() => setShowSuggestions(false)}
-                  className={`flex items-center gap-3 border-b p-3 transition-colors last:border-b-0 ${
-                    idx === selectedIndex ? "bg-accent" : "hover:bg-accent"
+                  className={`flex items-center gap-4 border-b p-4 transition-all last:border-b-0 ${
+                    idx === selectedIndex
+                      ? "bg-primary/10 border-l-4 border-l-primary"
+                      : "hover:bg-accent border-l-4 border-l-transparent"
                   }`}
                   onMouseEnter={() => setSelectedIndex(idx)}
                 >
-                  {product.image && (
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="h-12 w-12 rounded object-cover"
-                    />
+                  {product.image ? (
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <img
+                        src={product.image}
+                        alt={product.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border bg-muted">
+                      <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium line-clamp-1">{product.title}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm font-semibold line-clamp-2 leading-tight">{product.title}</div>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      {product.brand && (
+                        <span className="rounded bg-muted px-1.5 py-0.5 font-medium">{product.brand}</span>
+                      )}
+                      {product.category && (
+                        <span className="rounded bg-muted px-1.5 py-0.5">{product.category}</span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 text-base font-bold text-primary">
                       ${((product.price_amount ?? 0) / 100).toFixed(2)}
                     </div>
                   </div>
                   <svg
-                    className="h-4 w-4 text-muted-foreground"
+                    className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -178,9 +214,14 @@ export default function SearchAutocomplete({
                     router.push(`/shop?q=${encodeURIComponent(q)}`);
                     setShowSuggestions(false);
                   }}
-                  className="w-full p-3 text-center text-sm font-medium text-primary hover:bg-accent"
+                  className="w-full border-t-2 bg-gradient-to-r from-primary/5 to-primary/10 p-4 text-center text-sm font-semibold text-primary transition-colors hover:from-primary/10 hover:to-primary/20"
                 >
-                  View all results for "{q}"
+                  <div className="flex items-center justify-center gap-2">
+                    <span>View all results for "{q}"</span>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </div>
                 </button>
               )}
             </>
