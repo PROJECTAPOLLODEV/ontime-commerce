@@ -10,12 +10,17 @@ interface Feature {
   icon: string;
 }
 
+interface BrandLogo {
+  lightUrl: string;
+  darkUrl: string;
+}
+
 interface HomepageSettings {
   bannerImage: string;
   bannerHeading: string;
   bannerSub: string;
   featuredProductIds: string[];
-  brandLogos: string[];
+  brandLogos: BrandLogo[];
   features: Feature[];
 }
 
@@ -47,7 +52,7 @@ export default function HomepageAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<{ index: number; type: "light" | "dark" } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -122,20 +127,18 @@ export default function HomepageAdminPage() {
   };
 
   const addBrandLogo = () => {
-    const url = prompt("Enter brand logo URL:");
-    if (url) {
-      setSettings({
-        ...settings,
-        brandLogos: [...settings.brandLogos, url],
-      });
-    }
+    const newLogo: BrandLogo = { lightUrl: "", darkUrl: "" };
+    setSettings({
+      ...settings,
+      brandLogos: [...settings.brandLogos, newLogo],
+    });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number, type: "light" | "dark") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
+    setUploading({ index, type });
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -152,21 +155,41 @@ export default function HomepageAdminPage() {
 
       const data = await res.json();
 
-      // Add uploaded logo URL to settings
+      // Update the specific logo URL
+      const newLogos = [...settings.brandLogos];
+      if (type === "light") {
+        newLogos[index].lightUrl = data.url;
+      } else {
+        newLogos[index].darkUrl = data.url;
+      }
+
       setSettings({
         ...settings,
-        brandLogos: [...settings.brandLogos, data.url],
+        brandLogos: newLogos,
       });
 
       // Clear the file input
       e.target.value = "";
 
-      alert("Logo uploaded successfully!");
+      alert(`${type === "light" ? "Light" : "Dark"} logo uploaded successfully!`);
     } catch (err: any) {
       console.error("Error uploading logo:", err);
       alert(`Upload failed: ${err.message}`);
     }
-    setUploading(false);
+    setUploading(null);
+  };
+
+  const updateLogoUrl = (index: number, type: "light" | "dark", url: string) => {
+    const newLogos = [...settings.brandLogos];
+    if (type === "light") {
+      newLogos[index].lightUrl = url;
+    } else {
+      newLogos[index].darkUrl = url;
+    }
+    setSettings({
+      ...settings,
+      brandLogos: newLogos,
+    });
   };
 
   const removeBrandLogo = (index: number) => {
@@ -351,51 +374,111 @@ export default function HomepageAdminPage() {
           {/* Brand Logos */}
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Brand Logos</h2>
-              <div className="flex gap-2">
-                <label
-                  htmlFor="logo-upload"
-                  className={`cursor-pointer rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 ${
-                    uploading ? "opacity-50 pointer-events-none" : ""
-                  }`}
-                >
-                  {uploading ? "Uploading..." : "Upload Logo"}
-                </label>
-                <input
-                  id="logo-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <button
-                  onClick={addBrandLogo}
-                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
-                >
-                  + Add URL
-                </button>
-              </div>
+              <h2 className="text-xl font-semibold">Brand Logos (Light & Dark Mode)</h2>
+              <button
+                onClick={addBrandLogo}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
+              >
+                + Add Brand Logo
+              </button>
             </div>
             {settings.brandLogos.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No brand logos added yet. Click "Upload Logo" to upload a file or "Add URL" to add from a URL.
+                No brand logos added yet. Click "Add Brand Logo" to get started.
               </p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="space-y-6">
                 {settings.brandLogos.map((logo, index) => (
-                  <div key={index} className="group relative rounded-lg border bg-muted/30 p-4">
-                    <img
-                      src={logo}
-                      alt={`Brand ${index + 1}`}
-                      className="h-16 w-full object-contain"
-                    />
-                    <button
-                      onClick={() => removeBrandLogo(index)}
-                      className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      ×
-                    </button>
-                    <div className="mt-2 text-xs text-muted-foreground truncate">{logo}</div>
+                  <div key={index} className="rounded-lg border bg-muted/30 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="font-semibold">Brand Logo #{index + 1}</h3>
+                      <button
+                        onClick={() => removeBrandLogo(index)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-sm text-destructive-foreground hover:opacity-90"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Light Mode Logo */}
+                      <div className="rounded-lg border bg-background p-3">
+                        <div className="mb-2 flex items-center gap-2">
+                          <svg className="h-4 w-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
+                          </svg>
+                          <span className="text-sm font-semibold">Light Mode</span>
+                        </div>
+                        {logo.lightUrl && (
+                          <div className="mb-2 flex h-20 items-center justify-center rounded border bg-white">
+                            <img src={logo.lightUrl} alt="Light logo" className="max-h-16 max-w-full object-contain" />
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={logo.lightUrl}
+                            onChange={(e) => updateLogoUrl(index, "light", e.target.value)}
+                            placeholder="Enter light logo URL"
+                            className="w-full rounded border bg-background px-2 py-1.5 text-xs"
+                          />
+                          <label
+                            htmlFor={`light-upload-${index}`}
+                            className={`block cursor-pointer rounded border bg-primary px-2 py-1.5 text-center text-xs font-medium text-primary-foreground hover:opacity-90 ${
+                              uploading?.index === index && uploading?.type === "light" ? "opacity-50 pointer-events-none" : ""
+                            }`}
+                          >
+                            {uploading?.index === index && uploading?.type === "light" ? "Uploading..." : "Upload Light Logo"}
+                          </label>
+                          <input
+                            id={`light-upload-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, index, "light")}
+                            className="hidden"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Dark Mode Logo */}
+                      <div className="rounded-lg border bg-background p-3">
+                        <div className="mb-2 flex items-center gap-2">
+                          <svg className="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                          </svg>
+                          <span className="text-sm font-semibold">Dark Mode</span>
+                        </div>
+                        {logo.darkUrl && (
+                          <div className="mb-2 flex h-20 items-center justify-center rounded border bg-gray-900">
+                            <img src={logo.darkUrl} alt="Dark logo" className="max-h-16 max-w-full object-contain" />
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={logo.darkUrl}
+                            onChange={(e) => updateLogoUrl(index, "dark", e.target.value)}
+                            placeholder="Enter dark logo URL"
+                            className="w-full rounded border bg-background px-2 py-1.5 text-xs"
+                          />
+                          <label
+                            htmlFor={`dark-upload-${index}`}
+                            className={`block cursor-pointer rounded border bg-primary px-2 py-1.5 text-center text-xs font-medium text-primary-foreground hover:opacity-90 ${
+                              uploading?.index === index && uploading?.type === "dark" ? "opacity-50 pointer-events-none" : ""
+                            }`}
+                          >
+                            {uploading?.index === index && uploading?.type === "dark" ? "Uploading..." : "Upload Dark Logo"}
+                          </label>
+                          <input
+                            id={`dark-upload-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, index, "dark")}
+                            className="hidden"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

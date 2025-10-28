@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface PageJumpProps {
   currentPage: number;
   totalPages: number;
-  buildUrl: (page: number) => string;
 }
 
-export default function PageJump({ currentPage, totalPages, buildUrl }: PageJumpProps) {
+export default function PageJump({ currentPage, totalPages }: PageJumpProps) {
   const [pageValue, setPageValue] = useState(currentPage.toString());
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleJump = () => {
     const val = parseInt(pageValue);
     if (val >= 1 && val <= totalPages) {
-      window.location.href = buildUrl(val);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", val.toString());
+      router.push(`/shop?${params.toString()}`);
     }
   };
 

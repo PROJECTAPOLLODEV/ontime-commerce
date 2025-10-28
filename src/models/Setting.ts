@@ -7,7 +7,12 @@ const SettingSchema = new Schema(
       bannerHeading: { type: String, default: "Your Industrial Partner" },
       bannerSub: { type: String, default: "Quality signage & materials" },
       featuredProductIds: [{ type: Schema.Types.ObjectId, ref: "Product" }],
-      brandLogos: [String],
+      brandLogos: [
+        {
+          lightUrl: { type: String, default: "" },
+          darkUrl: { type: String, default: "" },
+        }
+      ],
       features: [
         {
           title: { type: String, default: "" },

@@ -4,6 +4,7 @@ import Setting from "@/models/Setting";
 import Product from "@/models/Product";
 import Link from "next/link";
 import ProductCard from "@/components/site/product-card";
+import BrandLogos from "@/components/BrandLogos";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function HomePage() {
   const bannerImage = resolveImage(settings?.homepage?.bannerImage || "hero.jpg");
   const bannerHeading = settings?.homepage?.bannerHeading || "Your Industrial Partner";
   const bannerSub = settings?.homepage?.bannerSub || "Quality signage & materials, built for tough environments.";
-  const logos: string[] = settings?.homepage?.brandLogos ?? [];
+  const logos: Array<{ lightUrl: string; darkUrl: string }> = settings?.homepage?.brandLogos ?? [];
 
   // Features (use from settings if available, otherwise defaults)
   const features = settings?.homepage?.features && settings.homepage.features.length > 0
@@ -184,37 +185,7 @@ export default async function HomePage() {
       </section>
 
       {/* Brand Logos */}
-      {logos.length > 0 && (
-        <section className="border-t bg-muted/30 py-16">
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold md:text-2xl">Trusted Brands</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                We partner with industry-leading brands
-              </p>
-            </div>
-            <div className="mt-10 grid grid-cols-3 gap-8 md:grid-cols-6">
-              {logos.map((src, i) => {
-                const logoSrc = resolveImage(src);
-                return (
-                  <div
-                    key={`${logoSrc}-${i}`}
-                    className="flex items-center justify-center rounded-lg border bg-background p-4 transition-all hover:shadow-md"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={logoSrc}
-                      alt="brand"
-                      className="h-12 w-full object-contain grayscale transition-all hover:grayscale-0"
-                      loading="lazy"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      <BrandLogos logos={logos} />
 
       {/* CTA Section */}
       <section className="bg-gradient-to-br from-primary/10 via-primary/5 to-background py-20">

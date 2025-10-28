@@ -18,6 +18,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const basePrice = product.price_amount ?? product?.price?.amount ?? 0;
   const price = applyMarkup(basePrice, mp);
 
+  // Calculate an inflated "retail price" to show as crossed out (30% higher)
+  const formerPrice = Math.round(price * 1.30);
+
   // Extract brand from attributes
   const brand = Array.isArray(product.attributes)
     ? product.attributes.find((a: any) => a.key === "Brand")?.value
@@ -99,10 +102,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="rounded-xl border bg-gradient-to-br from-primary/5 to-background p-6">
               <div className="flex items-baseline gap-3">
                 <div className="text-4xl font-bold text-primary">${(price / 100).toFixed(2)}</div>
-                {basePrice > 0 && basePrice !== price && (
-                  <div className="text-lg text-muted-foreground line-through">
-                    ${(basePrice / 100).toFixed(2)}
-                  </div>
+                {formerPrice > price && (
+                  <>
+                    <div className="text-lg text-muted-foreground line-through">
+                      ${(formerPrice / 100).toFixed(2)}
+                    </div>
+                    <div className="rounded-full bg-green-600 px-2 py-1 text-xs font-bold text-white">
+                      SAVE {Math.round(((formerPrice - price) / formerPrice) * 100)}%
+                    </div>
+                  </>
                 )}
               </div>
 
