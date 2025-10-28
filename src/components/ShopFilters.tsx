@@ -26,6 +26,7 @@ export default function ShopFilters({
   const searchParams = useSearchParams();
   const [minPrice, setMinPrice] = useState(currentMin || "");
   const [maxPrice, setMaxPrice] = useState(currentMax || "");
+  const [showAllBrands, setShowAllBrands] = useState(false);
 
   const updateFilter = (key: string, value: string | undefined) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -119,7 +120,7 @@ export default function ShopFilters({
             >
               All Brands
             </button>
-            {brands.slice(0, 10).map((brand) => (
+            {(showAllBrands ? brands : brands.slice(0, 10)).map((brand) => (
               <button
                 key={brand}
                 onClick={() => updateFilter("brand", brand)}
@@ -132,10 +133,21 @@ export default function ShopFilters({
                 {brand}
               </button>
             ))}
-            {brands.length > 10 && (
-              <p className="px-3 py-2 text-xs text-muted-foreground">
-                +{brands.length - 10} more brands
-              </p>
+            {brands.length > 10 && !showAllBrands && (
+              <button
+                onClick={() => setShowAllBrands(true)}
+                className="w-full rounded-md border border-dashed px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                Show {brands.length - 10} more brands
+              </button>
+            )}
+            {brands.length > 10 && showAllBrands && (
+              <button
+                onClick={() => setShowAllBrands(false)}
+                className="w-full rounded-md border border-dashed px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                Show less
+              </button>
             )}
           </div>
         </div>

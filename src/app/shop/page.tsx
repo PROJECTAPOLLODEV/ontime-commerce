@@ -192,27 +192,113 @@ export default async function ShopPage({
 
           {/* Pagination */}
           {pages > 1 && (
-            <div className="mt-8 flex items-center justify-between border-t pt-6">
-              <div className="text-sm text-muted-foreground">
-                Page {pageSafe} of {pages}
+            <div className="mt-8 space-y-4 border-t pt-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Page {pageSafe} of {pages} ({total} total products)
+                </div>
+                <div className="flex items-center gap-2">
+                  {pageSafe > 1 && (
+                    <>
+                      <Link
+                        href={`/shop?${qs({ page: 1 })}`}
+                        className="rounded-md border bg-card px-3 py-2 text-sm font-medium hover:bg-accent"
+                        title="First page"
+                      >
+                        ««
+                      </Link>
+                      <Link
+                        href={`/shop?${qs({ page: pageSafe - 1 })}`}
+                        className="rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-accent"
+                      >
+                        ← Previous
+                      </Link>
+                    </>
+                  )}
+
+                  {/* Page numbers - show 5 pages around current */}
+                  <div className="hidden items-center gap-1 sm:flex">
+                    {Array.from({ length: Math.min(5, pages) }, (_, i) => {
+                      let pageNum;
+                      if (pages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pageSafe <= 3) {
+                        pageNum = i + 1;
+                      } else if (pageSafe >= pages - 2) {
+                        pageNum = pages - 4 + i;
+                      } else {
+                        pageNum = pageSafe - 2 + i;
+                      }
+
+                      return (
+                        <Link
+                          key={pageNum}
+                          href={`/shop?${qs({ page: pageNum })}`}
+                          className={`rounded-md px-3 py-2 text-sm font-medium ${
+                            pageNum === pageSafe
+                              ? "bg-primary text-primary-foreground"
+                              : "border bg-card hover:bg-accent"
+                          }`}
+                        >
+                          {pageNum}
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {pageSafe < pages && (
+                    <>
+                      <Link
+                        href={`/shop?${qs({ page: pageSafe + 1 })}`}
+                        className="rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-accent"
+                      >
+                        Next →
+                      </Link>
+                      <Link
+                        href={`/shop?${qs({ page: pages })}`}
+                        className="rounded-md border bg-card px-3 py-2 text-sm font-medium hover:bg-accent"
+                        title="Last page"
+                      >
+                        »»
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-2">
-                {pageSafe > 1 && (
-                  <Link
-                    href={`/shop?${qs({ page: pageSafe - 1 })}`}
-                    className="rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-accent"
-                  >
-                    ← Previous
-                  </Link>
-                )}
-                {pageSafe < pages && (
-                  <Link
-                    href={`/shop?${qs({ page: pageSafe + 1 })}`}
-                    className="rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-accent"
-                  >
-                    Next →
-                  </Link>
-                )}
+
+              {/* Jump to page */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="page-jump" className="text-sm font-medium">
+                  Jump to page:
+                </label>
+                <input
+                  id="page-jump"
+                  type="number"
+                  min="1"
+                  max={pages}
+                  defaultValue={pageSafe}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = parseInt((e.target as HTMLInputElement).value);
+                      if (val >= 1 && val <= pages) {
+                        window.location.href = `/shop?${qs({ page: val })}`;
+                      }
+                    }
+                  }}
+                  className="w-20 rounded-md border bg-background px-3 py-2 text-sm"
+                />
+                <button
+                  onClick={(e) => {
+                    const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                    const val = parseInt(input.value);
+                    if (val >= 1 && val <= pages) {
+                      window.location.href = `/shop?${qs({ page: val })}`;
+                    }
+                  }}
+                  className="rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-accent"
+                >
+                  Go
+                </button>
               </div>
             </div>
           )}

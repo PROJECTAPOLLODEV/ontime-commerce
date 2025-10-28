@@ -20,7 +20,7 @@ export default function ProductCard({ product }: { product: any }) {
             </h3>
             <div className="flex items-baseline gap-2">
               <span className="text-lg font-bold text-primary">
-                ${((product.price?.amount ?? 0) / 100).toFixed(2)}
+                ${((product.price_amount ?? product.price?.amount ?? 0) / 100).toFixed(2)}
               </span>
             </div>
             {product.brand && (
