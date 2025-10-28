@@ -18,7 +18,24 @@ export async function GET() {
   await dbConnect();
   const cid = await getOrSetCookieId();
   const cart = await Cart.findOne({ cookieId: cid }).lean();
-  return NextResponse.json(cart ?? { items: [] });
+
+  if (!cart) {
+    return NextResponse.json({ items: [] });
+  }
+
+  // Serialize to prevent MongoDB object issues
+  const serializedCart = {
+    items: (cart.items || []).map((item: any) => ({
+      productId: String(item.productId),
+      title: item.title || "",
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      image: item.image || "",
+      sku: item.sku || "",
+    })),
+  };
+
+  return NextResponse.json(serializedCart);
 }
 
 // Add or update cart item
@@ -86,7 +103,19 @@ export async function POST(req: NextRequest) {
 
     // Return JSON for API calls, redirect for form submissions
     if (contentType.includes("application/json")) {
-      return NextResponse.json({ ok: true, cart: await Cart.findOne({ cookieId: cid }).lean() });
+      const updatedCart = await Cart.findOne({ cookieId: cid }).lean();
+      // Serialize to prevent MongoDB object issues
+      const serializedCart = {
+        items: (updatedCart?.items || []).map((item: any) => ({
+          productId: String(item.productId),
+          title: item.title || "",
+          price: item.price || 0,
+          quantity: item.quantity || 1,
+          image: item.image || "",
+          sku: item.sku || "",
+        })),
+      };
+      return NextResponse.json({ ok: true, cart: serializedCart });
     }
     return NextResponse.redirect(new URL("/cart", req.url));
   } catch (err: any) {
@@ -114,7 +143,20 @@ export async function DELETE(req: NextRequest) {
     cart.items = cart.items.filter((i: any) => String(i.productId) !== String(productId));
     await cart.save();
 
-    return NextResponse.json({ ok: true, cart: await Cart.findOne({ cookieId: cid }).lean() });
+    const updatedCart = await Cart.findOne({ cookieId: cid }).lean();
+    // Serialize to prevent MongoDB object issues
+    const serializedCart = {
+      items: (updatedCart?.items || []).map((item: any) => ({
+        productId: String(item.productId),
+        title: item.title || "",
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        image: item.image || "",
+        sku: item.sku || "",
+      })),
+    };
+
+    return NextResponse.json({ ok: true, cart: serializedCart });
   } catch (err: any) {
     console.error("Cart DELETE error:", err);
     return NextResponse.json(
