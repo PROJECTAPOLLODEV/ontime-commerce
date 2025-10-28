@@ -271,7 +271,6 @@ export default async function ShopPage({
               <PageJump
                 currentPage={pageSafe}
                 totalPages={pages}
-                buildUrl={(page) => `/shop?${qs({ page })}`}
               />
             </div>
           )}
