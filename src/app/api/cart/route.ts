@@ -21,56 +21,105 @@ export async function GET() {
   return NextResponse.json(cart ?? { items: [] });
 }
 
-// Add or form submit from PDP
+// Add or update cart item
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  const contentType = req.headers.get("content-type") || "";
-  let data: any = {};
-  if (contentType.includes("application/json")) data = await req.json();
-  else if (contentType.includes("application/x-www-form-urlencoded")) {
-    const fd = await req.formData();
-    data = Object.fromEntries(fd.entries());
-  }
+  try {
+    await dbConnect();
+    const contentType = req.headers.get("content-type") || "";
+    let data: any = {};
 
-  const action = data._action as string | undefined;
+    if (contentType.includes("application/json")) {
+      data = await req.json();
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+      const fd = await req.formData();
+      data = Object.fromEntries(fd.entries());
+    }
 
-  const cid = await getOrSetCookieId();
-  const cart = (await Cart.findOne({ cookieId: cid })) || new Cart({ cookieId: cid, items: [] });
+    const action = data._action as string | undefined;
+    const cid = await getOrSetCookieId();
+    const cart = (await Cart.findOne({ cookieId: cid })) || new Cart({ cookieId: cid, items: [] });
 
-  if (action === "update") {
-    const { productId, quantity } = data;
-    const q = Math.max(1, Number(quantity || 1));
+    // Handle form-based update action
+    if (action === "update") {
+      const { productId, quantity } = data;
+      const q = Math.max(1, Number(quantity || 1));
+      const idx = cart.items.findIndex((i: any) => String(i.productId) === String(productId));
+      if (idx >= 0) cart.items[idx].quantity = q;
+      await cart.save();
+      return NextResponse.redirect(new URL("/cart", req.url));
+    }
+
+    // Handle form-based remove action
+    if (action === "remove") {
+      const { productId } = data;
+      cart.items = cart.items.filter((i: any) => String(i.productId) !== String(productId));
+      await cart.save();
+      return NextResponse.redirect(new URL("/cart", req.url));
+    }
+
+    // Handle JSON-based add or update
+    const { productId, quantity = 1 } = data;
+    const p = await Product.findById(productId).lean();
+    if (!p) {
+      return NextResponse.json({ ok: false, error: "Product not found" }, { status: 404 });
+    }
+
     const idx = cart.items.findIndex((i: any) => String(i.productId) === String(productId));
-    if (idx >= 0) cart.items[idx].quantity = q;
-    await cart.save();
-    return NextResponse.redirect(new URL("/cart", req.url));
-  }
+    const price = p.price_amount ?? 0;
 
-  if (action === "remove") {
-    const { productId } = data;
+    if (idx >= 0) {
+      // If updating existing item, set quantity (not add)
+      cart.items[idx].quantity = Number(quantity || 1);
+    } else {
+      // Add new item
+      cart.items.push({
+        productId,
+        title: p.title,
+        price,
+        quantity: Number(quantity || 1),
+        image: p.image || (Array.isArray(p.images) ? p.images[0] : null),
+        sku: p.clover_no || "",
+      });
+    }
+
+    await cart.save();
+
+    // Return JSON for API calls, redirect for form submissions
+    if (contentType.includes("application/json")) {
+      return NextResponse.json({ ok: true, cart: await Cart.findOne({ cookieId: cid }).lean() });
+    }
+    return NextResponse.redirect(new URL("/cart", req.url));
+  } catch (err: any) {
+    console.error("Cart POST error:", err);
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Failed to update cart" },
+      { status: 500 }
+    );
+  }
+}
+
+// Remove item from cart
+export async function DELETE(req: NextRequest) {
+  try {
+    await dbConnect();
+    const { productId } = await req.json();
+
+    const cid = await getOrSetCookieId();
+    const cart = await Cart.findOne({ cookieId: cid });
+
+    if (!cart) {
+      return NextResponse.json({ ok: false, error: "Cart not found" }, { status: 404 });
+    }
+
     cart.items = cart.items.filter((i: any) => String(i.productId) !== String(productId));
     await cart.save();
-    return NextResponse.redirect(new URL("/cart", req.url));
+
+    return NextResponse.json({ ok: true, cart: await Cart.findOne({ cookieId: cid }).lean() });
+  } catch (err: any) {
+    console.error("Cart DELETE error:", err);
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Failed to remove item" },
+      { status: 500 }
+    );
   }
-
-  // default: add
-  const { productId, quantity = 1 } = data;
-  const p = await Product.findById(productId).lean();
-  if (!p) return NextResponse.json({ ok: false, error: "Product not found" }, { status: 404 });
-
-  const idx = cart.items.findIndex((i: any) => String(i.productId) === String(productId));
-  const price = p.price?.amount ?? 0; // base cents; markup applied on display only
-  if (idx >= 0) cart.items[idx].quantity += Number(quantity || 1);
-  else
-    cart.items.push({
-      productId,
-      title: p.title,
-      price,
-      quantity: Number(quantity || 1),
-      image: p.images?.[0] ?? null,
-      sku: p.inventory?.sku ?? "",
-    });
-
-  await cart.save();
-  return NextResponse.redirect(new URL("/cart", req.url));
 }

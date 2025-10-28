@@ -23,23 +23,48 @@ export default function AdminSettings() {
 
   const loadSettings = async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/settings");
-    const data = await res.json();
-    setSettings(data);
+    try {
+      const res = await fetch("/api/admin/settings");
+      if (!res.ok) {
+        console.error("Failed to load settings:", res.status, res.statusText);
+        alert(`Failed to load settings: ${res.status} ${res.statusText}`);
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      console.log("Loaded settings:", data);
+      setSettings(data);
+    } catch (err) {
+      console.error("Error loading settings:", err);
+      alert(`Error loading settings: ${err}`);
+    }
     setLoading(false);
   };
 
   const saveSettings = async () => {
     setSaving(true);
-    const res = await fetch("/api/admin/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
-    });
-    if (res.ok) {
-      alert("Settings saved successfully!");
-    } else {
-      alert("Error saving settings");
+    try {
+      console.log("Saving settings:", settings);
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      console.log("Save response status:", res.status);
+      if (res.ok) {
+        const saved = await res.json();
+        console.log("Settings saved successfully:", saved);
+        alert("Settings saved successfully!");
+        // Reload to confirm
+        await loadSettings();
+      } else {
+        const errorText = await res.text();
+        console.error("Error saving settings:", res.status, errorText);
+        alert(`Error saving settings: ${res.status} - ${errorText}`);
+      }
+    } catch (err) {
+      console.error("Exception saving settings:", err);
+      alert(`Exception saving settings: ${err}`);
     }
     setSaving(false);
   };

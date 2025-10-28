@@ -5,14 +5,13 @@ import { usePathname } from "next/navigation";
 import { SignedIn, SignedOut, SignInButton, SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import ThemeToggle from "@/components/site/theme-toggle";
 import SiteLogo from "@/components/site/site-logo";
-import { useState } from "react";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user } = useUser();
   const role = (user?.publicMetadata as any)?.role;
   const isAdmin = role === "admin";
-  const [q, setQ] = useState("");
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -21,24 +20,9 @@ export default function Navbar() {
         <SiteLogo className="min-w-0" />
 
         {/* Search (desktop) */}
-        <form action="/shop" method="GET" className="ml-3 hidden flex-1 items-center gap-2 md:flex" role="search">
-          <input
-            name="q"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search all products..."
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus:border-primary"
-          />
-          <button
-            type="submit"
-            className="inline-flex h-9 shrink-0 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            Search
-          </button>
-          <Link href="/shop?brand=" className="text-sm text-muted-foreground hover:text-foreground">
-            Brands
-          </Link>
-        </form>
+        <div className="ml-3 hidden flex-1 md:flex">
+          <SearchAutocomplete className="w-full" />
+        </div>
 
         {/* Right side */}
         <nav className="ml-auto flex items-center gap-3">
@@ -68,21 +52,7 @@ export default function Navbar() {
 
       {/* Mobile search */}
       <div className="mx-auto block w-full border-t px-4 py-2 sm:px-6 md:hidden">
-        <form action="/shop" method="GET" className="flex items-center gap-2">
-          <input
-            name="q"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search all products..."
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:border-primary"
-          />
-          <button
-            type="submit"
-            className="inline-flex h-10 shrink-0 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            Search
-          </button>
-        </form>
+        <SearchAutocomplete className="w-full" />
       </div>
     </header>
   );
