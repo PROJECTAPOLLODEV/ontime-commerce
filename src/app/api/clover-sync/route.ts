@@ -23,26 +23,30 @@ export async function GET(req: NextRequest) {
     // Upsert basic product info
     const itemNos: string[] = [];
     for (const p of pageData.products) {
-      const no = String(p.no);
-      itemNos.push(no);
+      const cloverNo = String(p.no);
+      itemNos.push(cloverNo);
+
+      // Generate slug from title
+      const slug = p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || cloverNo;
 
       await Product.updateOne(
-        { no },
+        { clover_no: cloverNo },
         {
           $set: {
-            no,
+            clover_no: cloverNo,
+            clover_id: p.ID,
+            clover_type: p.type,
             title: p.title,
-            type: p.type,
+            slug,
+            description: p.additionalProductInformation || "",
+            brand: p.oemNos?.[0]?.manufacturer || p.compatibleOems?.[0]?.manufacturer || "",
+            category: p.type || "",
             color: p.color,
             yield: p.yield,
             availability: p.availability,
             images: Array.isArray(p.images) ? p.images : [],
-            description: p.additionalProductInformation || "",
-            brand:
-              p.oemNos?.[0]?.manufacturer ||
-              p.compatibleOems?.[0]?.manufacturer ||
-              null,
-            updatedAt: new Date(),
+            image: p.images?.[0] || "",
+            oemNos: p.oemNos || [],
           },
         },
         { upsert: true }
@@ -62,14 +66,12 @@ export async function GET(req: NextRequest) {
         const sl = (item.serviceLevels || [])[0];
         const price = sl?.price ? Number(sl.price) : undefined;
         if (price != null && !Number.isNaN(price)) {
-          const priceCents = Math.round(price * 100);
+          const price_amount = Math.round(price * 100);
           await Product.updateOne(
-            { no: item.no },
+            { clover_no: item.no },
             {
               $set: {
-                priceCents,
-                currency: "USD",
-                priceUpdatedAt: new Date(),
+                price_amount,
               },
             }
           );

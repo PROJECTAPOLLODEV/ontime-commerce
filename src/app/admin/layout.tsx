@@ -11,6 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/products", label: "Products" },
     { href: "/admin/orders", label: "Orders" },
     { href: "/admin/settings", label: "Settings" },
+    { href: "/admin/sync", label: "Clover Sync" },
   ];
 
   return (
