@@ -2,10 +2,51 @@
 
 import { SignedIn, SignedOut, SignOutButton, useUser, UserProfile } from "@clerk/nextjs";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+
+interface OrderItem {
+  productId: string;
+  title: string;
+  price: number;
+  quantity: number;
+  image: string;
+  sku: string;
+}
+
+interface Order {
+  _id: string;
+  email: string;
+  items: OrderItem[];
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+}
 
 export default function AccountPage() {
   const { user } = useUser();
   const isAdmin = (user?.publicMetadata as any)?.role === "admin";
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadOrders();
+    }
+  }, [user]);
+
+  const loadOrders = async () => {
+    try {
+      const res = await fetch("/api/account/orders");
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+      }
+    } catch (err) {
+      console.error("Error loading orders:", err);
+    }
+    setLoadingOrders(false);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -115,6 +156,116 @@ export default function AccountPage() {
                   </button>
                 </SignOutButton>
               </div>
+            </div>
+          </div>
+
+          {/* Order History */}
+          <div className="rounded-lg border bg-card shadow-sm">
+            <div className="border-b bg-muted/50 px-6 py-4">
+              <h2 className="text-lg font-semibold">Order History</h2>
+              <p className="text-sm text-muted-foreground">
+                View your past orders and track their status
+              </p>
+            </div>
+            <div className="p-6">
+              {loadingOrders ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Loading orders...
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-muted-foreground">No orders yet</p>
+                  <Link
+                    href="/shop"
+                    className="mt-4 inline-block text-sm text-primary hover:underline"
+                  >
+                    Start shopping
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div
+                      key={order._id}
+                      className="rounded-lg border bg-muted/30 p-4 transition-all hover:bg-muted/50"
+                    >
+                      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="text-sm font-medium">
+                            Order #{order._id.slice(-8).toUpperCase()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(order.createdAt).toLocaleDateString("en-US", {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              order.status === "paid"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                : order.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                : order.status === "cancelled"
+                                ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+                            }`}
+                          >
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </span>
+                          <div className="text-base font-bold">
+                            ${(order.amount / 100).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            {item.image && (
+                              <img
+                                src={item.image}
+                                alt={item.title}
+                                className="h-12 w-12 rounded object-cover"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium line-clamp-1">
+                                {item.title}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Qty: {item.quantity} × ${(item.price / 100).toFixed(2)}
+                              </div>
+                            </div>
+                            <div className="text-sm font-medium">
+                              ${((item.price * item.quantity) / 100).toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {order.status === "paid" && (
+                        <div className="mt-3 flex gap-2 border-t pt-3">
+                          <button className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+                            View Details
+                          </button>
+                          <button className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+                            Track Order
+                          </button>
+                          <button className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
+                            Reorder
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
