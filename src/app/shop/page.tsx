@@ -3,6 +3,7 @@ import { dbConnect } from "@/lib/db";
 import Product from "@/models/Product";
 import ShopFilters from "@/components/ShopFilters";
 import ProductCard from "@/components/ProductCard";
+import PageJump from "@/components/PageJump";
 
 function toNum(v: unknown, fallback: number) {
   const n = Number(v);
@@ -267,39 +268,11 @@ export default async function ShopPage({
               </div>
 
               {/* Jump to page */}
-              <div className="flex items-center gap-2">
-                <label htmlFor="page-jump" className="text-sm font-medium">
-                  Jump to page:
-                </label>
-                <input
-                  id="page-jump"
-                  type="number"
-                  min="1"
-                  max={pages}
-                  defaultValue={pageSafe}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const val = parseInt((e.target as HTMLInputElement).value);
-                      if (val >= 1 && val <= pages) {
-                        window.location.href = `/shop?${qs({ page: val })}`;
-                      }
-                    }
-                  }}
-                  className="w-20 rounded-md border bg-background px-3 py-2 text-sm"
-                />
-                <button
-                  onClick={(e) => {
-                    const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
-                    const val = parseInt(input.value);
-                    if (val >= 1 && val <= pages) {
-                      window.location.href = `/shop?${qs({ page: val })}`;
-                    }
-                  }}
-                  className="rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-accent"
-                >
-                  Go
-                </button>
-              </div>
+              <PageJump
+                currentPage={pageSafe}
+                totalPages={pages}
+                buildUrl={(page) => `/shop?${qs({ page })}`}
+              />
             </div>
           )}
         </div>
