@@ -3,9 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { loadStripe } from "@stripe/stripe-js";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface CartItem {
   productId: string;
@@ -65,19 +62,14 @@ export default function CheckoutPage() {
         throw new Error(error.error || "Failed to create checkout session");
       }
 
-      const { sessionId } = await res.json();
+      const { url } = await res.json();
 
-      // Redirect to Stripe Checkout
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error("Stripe failed to load");
+      if (!url) {
+        throw new Error("No checkout URL received");
       }
 
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-
-      if (error) {
-        throw new Error(error.message);
-      }
+      // Redirect to Stripe Checkout using the session URL
+      window.location.href = url;
     } catch (err: any) {
       console.error("Checkout error:", err);
       alert(`Checkout failed: ${err.message}`);

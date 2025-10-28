@@ -8,6 +8,13 @@ const SettingSchema = new Schema(
       bannerSub: { type: String, default: "Quality signage & materials" },
       featuredProductIds: [{ type: Schema.Types.ObjectId, ref: "Product" }],
       brandLogos: [String],
+      features: [
+        {
+          title: { type: String, default: "" },
+          description: { type: String, default: "" },
+          icon: { type: String, default: "shipping" }, // shipping, payment, returns, support
+        }
+      ],
     },
     pricing: {
       markupPercent: { type: Number, default: 0 }, // e.g., 30 for "30 points"
