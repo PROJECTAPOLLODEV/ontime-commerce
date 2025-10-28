@@ -107,7 +107,7 @@ export default function HomepageAdminPage() {
       }
     } catch (err: any) {
       console.error("Error saving settings:", err);
-      alert(\`Failed to save: \${err.message}\`);
+      alert(`Failed to save: ${err.message}`);
     }
     setSaving(false);
   };
@@ -277,11 +277,11 @@ export default function HomepageAdminPage() {
               {filteredProducts.map((product) => (
                 <label
                   key={product._id}
-                  className={\`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all \${
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
                     selectedProducts.includes(product._id)
                       ? "border-primary bg-primary/10"
                       : "bg-background hover:bg-accent"
-                  }\`}
+                  }`}
                 >
                   <input
                     type="checkbox"
@@ -300,7 +300,7 @@ export default function HomepageAdminPage() {
                     <div className="text-sm font-medium line-clamp-1">{product.title}</div>
                     {product.price_amount && (
                       <div className="text-sm text-muted-foreground">
-                        \${(product.price_amount / 100).toFixed(2)}
+                        ${(product.price_amount / 100).toFixed(2)}
                       </div>
                     )}
                   </div>
@@ -330,7 +330,7 @@ export default function HomepageAdminPage() {
                   <div key={index} className="group relative rounded-lg border bg-muted/30 p-4">
                     <img
                       src={logo}
-                      alt={\`Brand \${index + 1}\`}
+                      alt={`Brand ${index + 1}`}
                       className="h-16 w-full object-contain"
                     />
                     <button
