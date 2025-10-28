@@ -8,9 +8,10 @@ import AddToCartForm from "@/components/AddToCartForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   await dbConnect();
-  const product = await Product.findOne({ slug: params.slug }).lean();
+  const { slug } = await params;
+  const product = await Product.findOne({ slug }).lean();
   if (!product) return notFound();
 
   const mp = await getMarkupPercent();
