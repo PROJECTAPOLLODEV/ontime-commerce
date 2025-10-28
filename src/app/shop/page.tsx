@@ -66,11 +66,23 @@ export default async function ShopPage({
   const total = await Product.countDocuments(filter);
   const pages = Math.max(1, Math.ceil(total / size));
   const pageSafe = Math.min(page, pages);
-  const products = await Product.find(filter)
+  const productsDocs = await Product.find(filter)
     .sort(sortQuery)
     .skip((pageSafe - 1) * size)
     .limit(size)
     .lean();
+
+  // Serialize products to plain objects for client components
+  const products = productsDocs.map((p: any) => ({
+    _id: String(p._id),
+    title: p.title || "",
+    slug: p.slug || "",
+    price_amount: p.price_amount || 0,
+    image: p.image || "",
+    images: Array.isArray(p.images) ? p.images : [],
+    brand: p.brand || "",
+    category: p.category || "",
+  }));
 
   const qs = (overrides: Partial<SearchParams>) => {
     const base = new URLSearchParams({
