@@ -47,6 +47,7 @@ export default function HomepageAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -128,6 +129,44 @@ export default function HomepageAdminPage() {
         brandLogos: [...settings.brandLogos, url],
       });
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      const data = await res.json();
+
+      // Add uploaded logo URL to settings
+      setSettings({
+        ...settings,
+        brandLogos: [...settings.brandLogos, data.url],
+      });
+
+      // Clear the file input
+      e.target.value = "";
+
+      alert("Logo uploaded successfully!");
+    } catch (err: any) {
+      console.error("Error uploading logo:", err);
+      alert(`Upload failed: ${err.message}`);
+    }
+    setUploading(false);
   };
 
   const removeBrandLogo = (index: number) => {
@@ -313,16 +352,33 @@ export default function HomepageAdminPage() {
           <div className="rounded-xl border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold">Brand Logos</h2>
-              <button
-                onClick={addBrandLogo}
-                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
-              >
-                + Add Logo
-              </button>
+              <div className="flex gap-2">
+                <label
+                  htmlFor="logo-upload"
+                  className={`cursor-pointer rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 ${
+                    uploading ? "opacity-50 pointer-events-none" : ""
+                  }`}
+                >
+                  {uploading ? "Uploading..." : "Upload Logo"}
+                </label>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={addBrandLogo}
+                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent"
+                >
+                  + Add URL
+                </button>
+              </div>
             </div>
             {settings.brandLogos.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No brand logos added yet. Click "Add Logo" to add one.
+                No brand logos added yet. Click "Upload Logo" to upload a file or "Add URL" to add from a URL.
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
