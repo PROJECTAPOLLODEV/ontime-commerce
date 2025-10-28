@@ -15,7 +15,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   if (!product) return notFound();
 
   const mp = await getMarkupPercent();
-  const price = applyMarkup(product?.price?.amount ?? 0, mp);
+  const basePrice = product.price_amount ?? product?.price?.amount ?? 0;
+  const price = applyMarkup(basePrice, mp);
 
   // Extract brand from attributes
   const brand = Array.isArray(product.attributes)
@@ -98,9 +99,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="rounded-xl border bg-gradient-to-br from-primary/5 to-background p-6">
               <div className="flex items-baseline gap-3">
                 <div className="text-4xl font-bold text-primary">${(price / 100).toFixed(2)}</div>
-                {product.price?.amount && product.price.amount !== price && (
+                {basePrice > 0 && basePrice !== price && (
                   <div className="text-lg text-muted-foreground line-through">
-                    ${(product.price.amount / 100).toFixed(2)}
+                    ${(basePrice / 100).toFixed(2)}
                   </div>
                 )}
               </div>
