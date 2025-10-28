@@ -8,6 +8,7 @@ const isPublic = createRouteMatcher([
   "/product/(.*)",
   "/cart",
   "/checkout",
+  "/checkout/(.*)",
   "/success",
   "/cancel",
   "/sign-in",
@@ -37,6 +38,13 @@ const isPublic = createRouteMatcher([
   "/api/debug-auth",
   "/api/debug-user",
   "/api/check-keys",
+  // Cart and checkout API routes (public for guest checkout)
+  "/api/cart",
+  "/api/cart/(.*)",
+  "/api/checkout",
+  "/api/checkout/(.*)",
+  "/api/search",
+  "/api/search/(.*)",
   // Admin API routes (protected at API level, not middleware)
   "/api/admin/(.*)",
   "/api/orders",
