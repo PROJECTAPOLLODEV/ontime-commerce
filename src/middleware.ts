@@ -23,6 +23,11 @@ const isPublic = createRouteMatcher([
   "/admin/(.*)",
   "/account",
   "/account/(.*)",
+  // Clover sync/test pages and API routes
+  "/clover-sync",
+  "/clover-test",
+  "/clover-token-test",
+  "/clover-products-test",
   // debug/test while building
   "/api/ping",
   "/api/products",
