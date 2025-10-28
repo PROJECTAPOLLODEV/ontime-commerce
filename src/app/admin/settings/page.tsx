@@ -18,7 +18,7 @@ export default function AdminSettings() {
       const res = await fetch("/api/admin/settings");
       if (!res.ok) {
         console.error("Failed to load settings:", res.status, res.statusText);
-        alert(\`Failed to load settings: \${res.status} \${res.statusText}\`);
+        alert(`Failed to load settings: ${res.status} ${res.statusText}`);
         setLoading(false);
         return;
       }
@@ -27,7 +27,7 @@ export default function AdminSettings() {
       setMarkupPercent(data.pricing?.markupPercent || 0);
     } catch (err) {
       console.error("Error loading settings:", err);
-      alert(\`Error loading settings: \${err}\`);
+      alert(`Error loading settings: ${err}`);
     }
     setLoading(false);
   };
@@ -52,11 +52,11 @@ export default function AdminSettings() {
       } else {
         const errorText = await res.text();
         console.error("Error saving settings:", res.status, errorText);
-        alert(\`Error saving settings: \${res.status} - \${errorText}\`);
+        alert(`Error saving settings: ${res.status} - ${errorText}`);
       }
     } catch (err) {
       console.error("Exception saving settings:", err);
-      alert(\`Exception saving settings: \${err}\`);
+      alert(`Exception saving settings: ${err}`);
     }
     setSaving(false);
   };
@@ -197,16 +197,16 @@ export default function AdminSettings() {
                 <p className="mb-3 font-semibold">Pricing Examples</p>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between rounded-md bg-background p-3">
-                    <span className="text-muted-foreground">Base Price: \$50.00</span>
-                    <span className="font-semibold">→ Customer Pays: \${(50 * (1 + markupPercent / 100)).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Base Price: $50.00</span>
+                    <span className="font-semibold">→ Customer Pays: ${(50 * (1 + markupPercent / 100)).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-md bg-background p-3">
-                    <span className="text-muted-foreground">Base Price: \$100.00</span>
-                    <span className="font-semibold">→ Customer Pays: \${(100 * (1 + markupPercent / 100)).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Base Price: $100.00</span>
+                    <span className="font-semibold">→ Customer Pays: ${(100 * (1 + markupPercent / 100)).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between rounded-md bg-background p-3">
-                    <span className="text-muted-foreground">Base Price: \$250.00</span>
-                    <span className="font-semibold">→ Customer Pays: \${(250 * (1 + markupPercent / 100)).toFixed(2)}</span>
+                    <span className="text-muted-foreground">Base Price: $250.00</span>
+                    <span className="font-semibold">→ Customer Pays: ${(250 * (1 + markupPercent / 100)).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
