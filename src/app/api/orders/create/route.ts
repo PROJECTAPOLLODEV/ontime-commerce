@@ -109,7 +109,9 @@ export async function POST(req: NextRequest) {
       fulfillmentStatus: "order_received",
     });
 
-    console.log("Order created successfully:", order._id);
+    console.log("✅ Order created successfully:", order._id);
+    console.log("📝 Order userId saved in DB:", order.userId);
+    console.log("📝 Order email:", order.email);
 
     // Clear the user's cart if they have one
     if (userId) {

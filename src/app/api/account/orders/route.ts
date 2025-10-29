@@ -16,16 +16,26 @@ export async function GET(req: NextRequest) {
     await dbConnect();
 
     console.log("=== ACCOUNT ORDERS DEBUG ===");
-    console.log("Clerk userId from auth():", userId);
+    console.log("🔍 Clerk userId from auth():", userId);
+    console.log("🔍 Querying for orders with userId:", userId);
 
     // Find all orders for this user
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log("Orders found:", orders.length);
+    console.log("📊 Orders found:", orders.length);
     if (orders.length > 0) {
-      console.log("First order userId:", orders[0].userId);
+      console.log("📝 First order userId:", orders[0].userId);
+      console.log("📝 First order email:", orders[0].email);
+      console.log("📝 First order _id:", orders[0]._id);
+    } else {
+      // If no orders found, let's check if any orders exist at all
+      const anyOrders = await Order.find({}).sort({ createdAt: -1 }).limit(3).lean();
+      console.log("📋 Total orders in DB:", await Order.countDocuments({}));
+      if (anyOrders.length > 0) {
+        console.log("📝 Sample order userIds in DB:", anyOrders.map((o: any) => ({ userId: o.userId, email: o.email })));
+      }
     }
 
     // Serialize orders
