@@ -4,7 +4,7 @@
 const BASE = process.env.CLOVER_BASE_URL || "https://www.cloverimaging.com/access-point";
 
 function getActiveApiKey() {
-  // We’re running sandbox now; flip to PROD later by .env
+  // We're running sandbox now; flip to PROD later by .env
   const env = (process.env.CLOVER_ENV || "sandbox").toLowerCase();
   const key = env === "production" ? process.env.CLOVER_API_KEY_PROD : process.env.CLOVER_API_KEY_SANDBOX;
   if (!key) throw new Error(`Missing Clover API key for env=${env}`);
@@ -17,7 +17,7 @@ export async function getCloverToken(): Promise<string> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ apiKey: key }),
-    // Next.js App Router: ensure we don’t cache auth
+    // Next.js App Router: ensure we don't cache auth
     cache: "no-store",
   });
   if (!res.ok) {
@@ -78,3 +78,34 @@ export async function cloverGetPrices(itemNos: string[], token: string) {
     token
   );
 }
+
+// Clover namespace object for backward compatibility with integration routes
+export const Clover = {
+  // Get products with pagination
+  async getProducts(page?: number, filters?: any) {
+    const token = await getCloverToken();
+    return cloverGetProductsPage({
+      page: page ?? 1,
+      search: filters?.search,
+      productTypes: filters?.productTypes,
+    }, token);
+  },
+
+  // Get prices for item numbers
+  async getPrices(itemNos: string[]) {
+    const token = await getCloverToken();
+    return cloverGetPrices(itemNos, token);
+  },
+
+  // Get availability for item numbers (same as prices, includes availability)
+  async getAvailability(itemNos: string[]) {
+    const token = await getCloverToken();
+    return cloverGetPrices(itemNos, token);
+  },
+
+  // Get all product types
+  async getAllProductTypes() {
+    const token = await getCloverToken();
+    return cloverPost<{ productTypes: string[] }>("/product-types", {}, token);
+  },
+};
