@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { calculateShippingByState, US_STATES } from "@/lib/shipping";
 
 interface CartItem {
   productId: string;
@@ -115,8 +116,10 @@ export default function CheckoutPage() {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Flat rate shipping: $15 for orders under $100, free over $100
-  const shipping = subtotal >= 10000 ? 0 : 1500; // in cents
+  // State-based shipping from Tennessee (free over $150)
+  const shipping = shippingAddress.state
+    ? calculateShippingByState(shippingAddress.state, subtotal)
+    : 1500; // Default $15 if no state selected
 
   // Flat tax rate: 8.5%
   const tax = Math.round(subtotal * 0.085);
@@ -246,15 +249,20 @@ export default function CheckoutPage() {
                   <label className="block text-sm font-medium">
                     State <span className="text-destructive">*</span>
                   </label>
-                  <input
+                  <select
                     form="checkout-form"
-                    type="text"
                     required
                     value={shippingAddress.state}
                     onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
                     className="mt-1 w-full rounded-md border bg-background px-3 py-2"
-                    placeholder="NY"
-                  />
+                  >
+                    <option value="">Select State</option>
+                    {US_STATES.map((state) => (
+                      <option key={state.code} value={state.code}>
+                        {state.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -360,9 +368,21 @@ export default function CheckoutPage() {
               </span>
             </div>
 
-            {subtotal < 10000 && (
+            {!shippingAddress.state && (
+              <div className="mt-4 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                Select a state to calculate shipping
+              </div>
+            )}
+
+            {subtotal < 15000 && shippingAddress.state && shipping > 0 && (
               <div className="mt-4 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-                Add ${((10000 - subtotal) / 100).toFixed(2)} more for free shipping!
+                Add ${((15000 - subtotal) / 100).toFixed(2)} more for free shipping!
+              </div>
+            )}
+
+            {shipping === 0 && shippingAddress.state && (
+              <div className="mt-4 rounded-md bg-green-50 px-3 py-2 text-xs text-green-900 dark:bg-green-950/30 dark:text-green-200">
+                🎉 You qualify for free shipping!
               </div>
             )}
 
