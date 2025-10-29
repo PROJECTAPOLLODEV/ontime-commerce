@@ -4,6 +4,7 @@ import Product from "@/models/Product";
 import ShopFilters from "@/components/ShopFilters";
 import ProductCard from "@/components/ProductCard";
 import PageJump from "@/components/PageJump";
+import { applyMarkup, getMarkupPercent } from "@/lib/pricing";
 
 function toNum(v: unknown, fallback: number) {
   const n = Number(v);
@@ -73,12 +74,15 @@ export default async function ShopPage({
     .limit(size)
     .lean();
 
-  // Serialize products to plain objects for client components
+  // Get markup percentage
+  const mp = await getMarkupPercent();
+
+  // Serialize products to plain objects for client components and apply markup
   const products = productsDocs.map((p: any) => ({
     _id: String(p._id),
     title: p.title || "",
     slug: p.slug || "",
-    price_amount: p.price_amount || 0,
+    price_amount: applyMarkup(p.price_amount || 0, mp),
     image: p.image || "",
     images: Array.isArray(p.images) ? p.images : [],
     brand: p.brand || "",

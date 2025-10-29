@@ -65,12 +65,22 @@ export default function HomepageAdminPage() {
       const res = await fetch("/api/admin/homepage");
       if (res.ok) {
         const data = await res.json();
+
+        // Migrate old string-based logos to new object format (just in case)
+        let logos = data.brandLogos || [];
+        if (logos.length > 0 && typeof logos[0] === "string") {
+          logos = logos.map((url: string) => ({
+            lightUrl: url,
+            darkUrl: url,
+          }));
+        }
+
         setSettings({
           bannerImage: data.bannerImage || "",
           bannerHeading: data.bannerHeading || "Your Industrial Partner",
           bannerSub: data.bannerSub || "Quality signage & materials",
           featuredProductIds: data.featuredProductIds || [],
-          brandLogos: data.brandLogos || [],
+          brandLogos: logos,
           features: data.features && data.features.length > 0 ? data.features : defaultFeatures,
         });
         setSelectedProducts(data.featuredProductIds || []);

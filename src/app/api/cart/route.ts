@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import Cart from "@/models/Cart";
 import Product from "@/models/Product";
+import { applyMarkup, getMarkupPercent } from "@/lib/pricing";
 
 async function getOrSetCookieId() {
   const jar = await cookies();
@@ -82,11 +83,16 @@ export async function POST(req: NextRequest) {
     }
 
     const idx = cart.items.findIndex((i: any) => String(i.productId) === String(productId));
-    const price = p.price_amount ?? 0;
+
+    // Get markup and apply it to the price
+    const mp = await getMarkupPercent();
+    const basePrice = p.price_amount ?? 0;
+    const price = applyMarkup(basePrice, mp);
 
     if (idx >= 0) {
-      // If updating existing item, set quantity (not add)
+      // If updating existing item, set quantity and update price (in case markup changed)
       cart.items[idx].quantity = Number(quantity || 1);
+      cart.items[idx].price = price;
     } else {
       // Add new item
       cart.items.push({
