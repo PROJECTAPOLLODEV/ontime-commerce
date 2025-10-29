@@ -2,11 +2,42 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const [orderCreated, setOrderCreated] = useState(false);
+  const [creating, setCreating] = useState(true);
+
+  useEffect(() => {
+    // Create order when component mounts (for development without webhooks)
+    if (sessionId && !orderCreated) {
+      createOrder();
+    }
+  }, [sessionId]);
+
+  const createOrder = async () => {
+    try {
+      const res = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Order created:", data.orderId);
+        setOrderCreated(true);
+      } else {
+        console.error("Failed to create order");
+      }
+    } catch (err) {
+      console.error("Error creating order:", err);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16">
@@ -33,13 +64,19 @@ function SuccessContent() {
           Thank you for your purchase
         </p>
 
+        {creating && (
+          <div className="mb-4 text-sm text-muted-foreground">
+            Processing your order...
+          </div>
+        )}
+
         <div className="mb-8 rounded-md bg-muted/50 p-4">
           <p className="text-sm text-muted-foreground">
             We've sent a confirmation email with your order details.
           </p>
           {sessionId && (
             <p className="mt-2 text-xs font-mono text-muted-foreground">
-              Order ID: {sessionId.substring(0, 24)}...
+              Session ID: {sessionId.substring(0, 24)}...
             </p>
           )}
         </div>
@@ -55,7 +92,7 @@ function SuccessContent() {
             href="/account"
             className="inline-flex items-center justify-center rounded-md border px-6 py-3 font-medium hover:bg-accent"
           >
-            View Account
+            View Order
           </Link>
         </div>
 
