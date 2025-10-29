@@ -30,7 +30,13 @@ export default async function HomePage() {
   const bannerImage = resolveImage(settings?.homepage?.bannerImage || "hero.jpg");
   const bannerHeading = settings?.homepage?.bannerHeading || "Your Industrial Partner";
   const bannerSub = settings?.homepage?.bannerSub || "Quality signage & materials, built for tough environments.";
-  const logos: Array<{ lightUrl: string; darkUrl: string }> = settings?.homepage?.brandLogos ?? [];
+
+  // Serialize logos properly for client component (remove MongoDB _id)
+  const logos: Array<{ lightUrl: string; darkUrl: string }> =
+    (settings?.homepage?.brandLogos ?? []).map((logo: any) => ({
+      lightUrl: logo.lightUrl || "",
+      darkUrl: logo.darkUrl || "",
+    }));
 
   // Features (use from settings if available, otherwise defaults)
   const features = settings?.homepage?.features && settings.homepage.features.length > 0
