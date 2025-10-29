@@ -15,10 +15,18 @@ export async function GET(req: NextRequest) {
 
     await dbConnect();
 
+    console.log("=== ACCOUNT ORDERS DEBUG ===");
+    console.log("Clerk userId from auth():", userId);
+
     // Find all orders for this user
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
       .lean();
+
+    console.log("Orders found:", orders.length);
+    if (orders.length > 0) {
+      console.log("First order userId:", orders[0].userId);
+    }
 
     // Serialize orders
     const serialized = orders.map((order: any) => ({
