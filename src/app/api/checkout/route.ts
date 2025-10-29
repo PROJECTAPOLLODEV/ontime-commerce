@@ -69,6 +69,12 @@ export async function POST(req: NextRequest) {
       quantity: 1,
     });
 
+    // Store minimal item data to avoid 500 char metadata limit
+    // Format: "productId:quantity,productId:quantity,..."
+    const itemsCompact = items.map((item: any) =>
+      `${item.productId}:${item.quantity}`
+    ).join(",");
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -84,9 +90,16 @@ export async function POST(req: NextRequest) {
         shipping: shipping.toString(),
         tax: tax.toString(),
         total: total.toString(),
-        // Store items and shipping as JSON strings
-        items: JSON.stringify(items),
-        shippingAddress: JSON.stringify(shippingAddress),
+        // Store compact items format (stays under 500 chars)
+        itemsCompact: itemsCompact,
+        // Store shipping address fields separately to avoid limit
+        shipName: shippingAddress.name || "",
+        shipLine1: shippingAddress.line1 || "",
+        shipLine2: shippingAddress.line2 || "",
+        shipCity: shippingAddress.city || "",
+        shipState: shippingAddress.state || "",
+        shipZip: shippingAddress.postalCode || "",
+        shipCountry: shippingAddress.country || "US",
       },
     });
 
