@@ -65,32 +65,33 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Link
-      href={`/product/${product.slug || product._id}`}
-      className="group relative flex flex-col overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md"
-    >
-      {/* Product Image */}
-      <div className="aspect-square overflow-hidden bg-white">
+    <div className="group relative flex flex-col overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md">
+      {/* Product Image - Clickable */}
+      <Link href={`/product/${product.slug || product._id}`} className="aspect-square overflow-hidden bg-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imgSrc}
           alt={product.title}
           className="h-full w-full object-contain transition-transform group-hover:scale-105"
         />
-      </div>
+      </Link>
 
       {/* Product Info */}
       <div className="flex flex-1 flex-col p-3">
-        <h3 className="mb-2 line-clamp-2 text-sm font-medium leading-tight">
-          {product.title}
-        </h3>
+        {/* Title - Clickable */}
+        <Link href={`/product/${product.slug || product._id}`}>
+          <h3 className="mb-2 line-clamp-2 text-sm font-medium leading-tight hover:text-primary transition-colors">
+            {product.title}
+          </h3>
+        </Link>
+
         <div className="mt-auto flex items-center justify-between">
           <span className="text-lg font-bold">
             ${((product.price_amount ?? 0) / 100).toFixed(2)}
           </span>
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Add to Cart Button - NOT inside Link */}
         <button
           onClick={handleAddToCart}
           disabled={adding}
@@ -99,6 +100,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           {adding ? "Adding..." : "Add to Cart"}
         </button>
       </div>
-    </Link>
+    </div>
   );
 }
