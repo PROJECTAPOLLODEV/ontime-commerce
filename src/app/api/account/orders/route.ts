@@ -32,9 +32,15 @@ export async function GET(req: NextRequest) {
         image: item.image || "",
         sku: item.sku || "",
       })),
+      shippingAddress: order.shippingAddress || {},
+      subtotal: order.subtotal || 0,
+      shipping: order.shipping || 0,
+      tax: order.tax || 0,
       amount: order.amount || 0,
       currency: order.currency || "usd",
-      status: order.status || "paid",
+      paymentStatus: order.paymentStatus || order.status || "paid",
+      fulfillmentStatus: order.fulfillmentStatus || "order_received",
+      trackingNumber: order.trackingNumber || "",
       createdAt: order.createdAt,
     }));
 

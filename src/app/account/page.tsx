@@ -13,21 +13,47 @@ interface OrderItem {
   sku: string;
 }
 
+interface ShippingAddress {
+  name: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
 interface Order {
   _id: string;
   email: string;
   items: OrderItem[];
+  shippingAddress?: ShippingAddress;
+  subtotal: number;
+  shipping: number;
+  tax: number;
   amount: number;
   currency: string;
-  status: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  trackingNumber?: string;
   createdAt: string;
 }
+
+const fulfillmentStages = [
+  { key: "order_received", label: "Order Received" },
+  { key: "processing", label: "Processing" },
+  { key: "shipped", label: "Shipped" },
+  { key: "in_transit", label: "In Transit" },
+  { key: "out_for_delivery", label: "Out for Delivery" },
+  { key: "delivered", label: "Delivered" },
+];
 
 export default function AccountPage() {
   const { user } = useUser();
   const isAdmin = (user?.publicMetadata as any)?.role === "admin";
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -46,6 +72,16 @@ export default function AccountPage() {
       console.error("Error loading orders:", err);
     }
     setLoadingOrders(false);
+  };
+
+  const getFulfillmentStageIndex = (status: string) => {
+    return fulfillmentStages.findIndex((s) => s.key === status);
+  };
+
+  const getFulfillmentStatusColor = (status: string) => {
+    if (status === "cancelled") return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+    if (status === "delivered") return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+    return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
   };
 
   return (
@@ -184,86 +220,162 @@ export default function AccountPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order._id}
-                      className="rounded-lg border bg-muted/30 p-4 transition-all hover:bg-muted/50"
-                    >
-                      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <div className="text-sm font-medium">
-                            Order #{order._id.slice(-8).toUpperCase()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              order.status === "paid"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                : order.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                : order.status === "cancelled"
-                                ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
-                            }`}
-                          >
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </span>
-                          <div className="text-base font-bold">
-                            ${(order.amount / 100).toFixed(2)}
-                          </div>
-                        </div>
-                      </div>
+                  {orders.map((order) => {
+                    const isExpanded = expandedOrder === order._id;
+                    const currentStageIndex = getFulfillmentStageIndex(order.fulfillmentStatus);
 
-                      <div className="space-y-2">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-3">
-                            {item.image && (
-                              <img
-                                src={item.image}
-                                alt={item.title}
-                                className="h-12 w-12 rounded object-cover"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium line-clamp-1">
-                                {item.title}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                Qty: {item.quantity} × ${(item.price / 100).toFixed(2)}
-                              </div>
-                            </div>
+                    return (
+                      <div
+                        key={order._id}
+                        className="rounded-lg border bg-muted/30 p-4 transition-all"
+                      >
+                        {/* Order Header */}
+                        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
                             <div className="text-sm font-medium">
-                              ${((item.price * item.quantity) / 100).toFixed(2)}
+                              Order #{order._id.slice(-8).toUpperCase()}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(order.createdAt).toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </div>
                           </div>
-                        ))}
-                      </div>
-
-                      {order.status === "paid" && (
-                        <div className="mt-3 flex gap-2 border-t pt-3">
-                          <button className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                            View Details
-                          </button>
-                          <button className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                            Track Order
-                          </button>
-                          <button className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent">
-                            Reorder
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getFulfillmentStatusColor(order.fulfillmentStatus)}`}>
+                              {order.fulfillmentStatus.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                            </span>
+                            <div className="text-base font-bold">
+                              ${(order.amount / 100).toFixed(2)}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {/* Fulfillment Progress Tracker */}
+                        {order.fulfillmentStatus !== "cancelled" && (
+                          <div className="mb-4 rounded-lg bg-card p-4">
+                            <div className="flex items-center justify-between">
+                              {fulfillmentStages.map((stage, idx) => (
+                                <div key={stage.key} className="flex flex-1 items-center">
+                                  <div className="flex flex-col items-center">
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium ${
+                                      idx <= currentStageIndex
+                                        ? "bg-primary text-primary-foreground"
+                                        : "bg-muted text-muted-foreground"
+                                    }`}>
+                                      {idx < currentStageIndex ? "✓" : idx + 1}
+                                    </div>
+                                    <div className="mt-1 text-center text-xs font-medium hidden sm:block">
+                                      {stage.label.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                                    </div>
+                                  </div>
+                                  {idx < fulfillmentStages.length - 1 && (
+                                    <div className={`flex-1 h-1 mx-2 ${
+                                      idx < currentStageIndex ? "bg-primary" : "bg-muted"
+                                    }`} />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tracking Number */}
+                        {order.trackingNumber && (
+                          <div className="mb-3 rounded-lg bg-blue-50 p-3 dark:bg-blue-950/30">
+                            <div className="text-xs font-medium text-blue-900 dark:text-blue-200">
+                              Tracking Number: <span className="font-mono">{order.trackingNumber}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Items List */}
+                        <div className="space-y-2 border-t pt-3">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              {item.image && (
+                                <img
+                                  src={item.image}
+                                  alt={item.title}
+                                  className="h-12 w-12 rounded object-cover"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium line-clamp-1">
+                                  {item.title}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Qty: {item.quantity} × ${(item.price / 100).toFixed(2)}
+                                </div>
+                              </div>
+                              <div className="text-sm font-medium">
+                                ${((item.price * item.quantity) / 100).toFixed(2)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Expandable Details */}
+                        <button
+                          onClick={() => setExpandedOrder(isExpanded ? null : order._id)}
+                          className="mt-3 w-full text-center text-sm text-primary hover:underline"
+                        >
+                          {isExpanded ? "Hide Details" : "Show Details"}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-3 space-y-3 border-t pt-3">
+                            {/* Shipping Address */}
+                            {order.shippingAddress && (
+                              <div className="rounded-lg bg-card p-3">
+                                <div className="text-xs font-semibold text-muted-foreground mb-1">
+                                  Shipping Address
+                                </div>
+                                <div className="text-sm">
+                                  <div>{order.shippingAddress.name}</div>
+                                  <div>{order.shippingAddress.line1}</div>
+                                  {order.shippingAddress.line2 && <div>{order.shippingAddress.line2}</div>}
+                                  <div>
+                                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
+                                  </div>
+                                  <div>{order.shippingAddress.country}</div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Order Breakdown */}
+                            <div className="rounded-lg bg-card p-3">
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">
+                                Order Summary
+                              </div>
+                              <div className="space-y-1 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Subtotal</span>
+                                  <span>${(order.subtotal / 100).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Shipping</span>
+                                  <span>{order.shipping === 0 ? "FREE" : `$${(order.shipping / 100).toFixed(2)}`}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Tax</span>
+                                  <span>${(order.tax / 100).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between border-t pt-1 font-bold">
+                                  <span>Total</span>
+                                  <span>${(order.amount / 100).toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

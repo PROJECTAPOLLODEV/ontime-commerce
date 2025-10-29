@@ -12,7 +12,7 @@ export default function AddToCartForm({ productId }: AddToCartFormProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleAddToCart = async (e: React.FormEvent) => {
+  const handleAddToCart = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -30,14 +30,8 @@ export default function AddToCartForm({ productId }: AddToCartFormProps) {
 
       if (response.ok) {
         // Show success feedback
-        const button = e.currentTarget.querySelector("button[type='submit']");
-        if (button) {
-          const originalText = button.textContent;
-          button.textContent = "Added!";
-          setTimeout(() => {
-            button.textContent = originalText;
-          }, 2000);
-        }
+        alert("Added to cart successfully!");
+        router.refresh();
       } else {
         const error = await response.json();
         throw new Error(error.error || "Failed to add to cart");
