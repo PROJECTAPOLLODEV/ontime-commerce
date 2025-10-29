@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { calculateShippingByState } from "@/lib/shipping";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-12-18.acacia",
@@ -16,16 +17,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!shippingAddress || !shippingAddress.name || !shippingAddress.line1) {
+    if (!shippingAddress || !shippingAddress.name || !shippingAddress.line1 || !shippingAddress.state) {
       return NextResponse.json(
-        { error: "Shipping address is required" },
+        { error: "Shipping address with state is required" },
         { status: 400 }
       );
     }
 
     // Calculate totals
     const subtotal = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
-    const shipping = subtotal >= 10000 ? 0 : 1500; // $15 flat rate, free over $100
+    const shipping = calculateShippingByState(shippingAddress.state, subtotal); // State-based shipping from TN
     const tax = Math.round(subtotal * 0.085); // 8.5% tax
     const total = subtotal + shipping + tax;
 
