@@ -5,6 +5,7 @@ import Product from "@/models/Product";
 import Link from "next/link";
 import ProductCard from "@/components/site/product-card";
 import BrandLogos from "@/components/BrandLogos";
+import { applyMarkup, getMarkupPercent } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,14 @@ export default async function HomePage() {
   const featured = featuredIds.length
     ? await Product.find({ _id: { $in: featuredIds } }).lean()
     : await Product.find({}).sort({ createdAt: -1 }).limit(8).lean();
+
+  // Get markup and apply to products
+  const mp = await getMarkupPercent();
+  const featuredWithMarkup = featured.map((p: any) => ({
+    ...p,
+    _id: String(p._id),
+    price_amount: applyMarkup(p.price_amount ?? p.price?.amount ?? 0, mp),
+  }));
 
   return (
     <>
@@ -167,7 +176,7 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-          {featured.map((p: any) => (
+          {featuredWithMarkup.map((p: any) => (
             <ProductCard key={String(p._id)} product={p} />
           ))}
         </div>

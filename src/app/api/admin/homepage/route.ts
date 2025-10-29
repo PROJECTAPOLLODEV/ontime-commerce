@@ -21,12 +21,30 @@ export async function GET() {
       });
     }
 
+    // Migrate old string-based logos to new object format
+    let brandLogos = settings.homepage.brandLogos || [];
+    if (brandLogos.length > 0 && typeof brandLogos[0] === "string") {
+      // Old format detected - migrate
+      brandLogos = brandLogos.map((url: string) => ({
+        lightUrl: url,
+        darkUrl: url, // Use same logo for both by default
+      }));
+
+      // Save migrated data
+      try {
+        settings.homepage.brandLogos = brandLogos;
+        await Setting.findOneAndUpdate({}, settings);
+      } catch (migrationErr) {
+        console.error("Error migrating logo format:", migrationErr);
+      }
+    }
+
     return NextResponse.json({
       bannerImage: settings.homepage.bannerImage || "",
       bannerHeading: settings.homepage.bannerHeading || "Your Industrial Partner",
       bannerSub: settings.homepage.bannerSub || "Quality signage & materials",
       featuredProductIds: (settings.homepage.featuredProductIds || []).map((id: any) => String(id)),
-      brandLogos: settings.homepage.brandLogos || [],
+      brandLogos: brandLogos,
       features: settings.homepage.features || [],
     });
   } catch (err: any) {
