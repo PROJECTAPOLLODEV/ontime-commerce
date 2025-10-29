@@ -42,15 +42,8 @@ export default function ProductCard({ product }: ProductCardProps) {
         // Trigger a cart update event so other components can refresh
         window.dispatchEvent(new Event("cart-updated"));
 
-        // Show quick feedback
-        const button = e.currentTarget as HTMLButtonElement;
-        const originalText = button.textContent;
-        button.textContent = "Added!";
-        button.classList.add("bg-green-600");
-
+        // Reset after short delay to show success
         setTimeout(() => {
-          button.textContent = originalText;
-          button.classList.remove("bg-green-600");
           setAdding(false);
         }, 1000);
       } else {
@@ -95,9 +88,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <button
           onClick={handleAddToCart}
           disabled={adding}
-          className="mt-3 w-full rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
+          className={`mt-3 w-full rounded-md px-3 py-2 text-xs font-medium text-primary-foreground transition-colors disabled:opacity-50 ${
+            adding ? "bg-green-600" : "bg-primary hover:opacity-90"
+          }`}
         >
-          {adding ? "Adding..." : "Add to Cart"}
+          {adding ? "✓ Added!" : "Add to Cart"}
         </button>
       </div>
     </div>

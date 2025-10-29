@@ -47,6 +47,7 @@ const isPublic = createRouteMatcher([
   "/api/search",
   "/api/search/(.*)",
   "/api/orders/track", // Public order tracking for guests
+  "/api/account/orders", // Protected at API level with auth()
   // Admin API routes (protected at API level, not middleware)
   "/api/admin/(.*)",
   "/api/orders",
