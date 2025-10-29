@@ -74,7 +74,11 @@ export async function POST(req: NextRequest) {
 
     const userId = session.metadata?.userId === "guest" ? null : session.metadata?.userId;
 
-    console.log("User ID:", userId);
+    console.log("=== ORDER CREATION DEBUG ===");
+    console.log("Session ID:", sessionId);
+    console.log("User ID from metadata:", session.metadata?.userId);
+    console.log("User ID parsed:", userId);
+    console.log("Email:", session.metadata?.email || session.customer_email);
     console.log("Items reconstructed:", items.length);
 
     // Reconstruct shipping address from separate fields

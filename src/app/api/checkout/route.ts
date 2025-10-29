@@ -10,6 +10,11 @@ export async function POST(req: NextRequest) {
   try {
     const { email, items, shippingAddress, userId } = await req.json();
 
+    console.log("=== CHECKOUT API DEBUG ===");
+    console.log("userId received from client:", userId);
+    console.log("email:", email);
+    console.log("items count:", items?.length);
+
     if (!email || !items || items.length === 0) {
       return NextResponse.json(
         { error: "Email and items are required" },

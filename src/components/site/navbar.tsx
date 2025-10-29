@@ -28,6 +28,7 @@ export default function Navbar() {
         <nav className="ml-auto flex items-center gap-3">
           <NavLink href="/shop" active={pathname?.startsWith("/shop")}>Shop</NavLink>
           <NavLink href="/cart" active={pathname === "/cart"}>Cart</NavLink>
+          <NavLink href="/track-order" active={pathname === "/track-order"}>Track</NavLink>
 
           <SignedIn>
             <NavLink href="/account" active={pathname?.startsWith("/account")}>Account</NavLink>
