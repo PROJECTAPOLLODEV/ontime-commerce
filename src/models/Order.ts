@@ -14,10 +14,30 @@ const OrderSchema = new Schema(
         sku: String,
       },
     ],
-    amount: Number, // cents
+    shippingAddress: {
+      name: String,
+      line1: String,
+      line2: String,
+      city: String,
+      state: String,
+      postalCode: String,
+      country: { type: String, default: "US" },
+    },
+    subtotal: Number, // cents - items subtotal
+    shipping: Number, // cents - shipping cost
+    tax: Number, // cents - tax amount
+    amount: Number, // cents - total amount (subtotal + shipping + tax)
     currency: { type: String, default: "usd" },
     stripePaymentIntentId: String,
-    status: { type: String, default: "paid" },
+    stripeSessionId: String,
+    paymentStatus: { type: String, default: "paid" }, // paid, pending, failed
+    fulfillmentStatus: {
+      type: String,
+      default: "order_received",
+      enum: ["order_received", "processing", "shipped", "in_transit", "out_for_delivery", "delivered", "cancelled"],
+    },
+    trackingNumber: String,
+    notes: String,
   },
   { timestamps: true }
 );
