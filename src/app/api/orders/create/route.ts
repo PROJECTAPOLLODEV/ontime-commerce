@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import Order from "@/models/Order";
 import Cart from "@/models/Cart";
+import Product from "@/models/Product";
 import { stripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -36,36 +37,63 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Payment not completed" }, { status: 400 });
     }
 
-    // Parse metadata
-    const items = JSON.parse(session.metadata?.items || "[]");
-    const shippingAddress = JSON.parse(session.metadata?.shippingAddress || "{}");
-    const userId = session.metadata?.userId === "guest" ? null : session.metadata?.userId;
+    // Parse compact items format: "productId:quantity,productId:quantity,..."
+    const itemsCompact = session.metadata?.itemsCompact || "";
+    const itemPairs = itemsCompact.split(",").filter(Boolean);
 
     console.log("Creating order for session:", sessionId);
+    console.log("Item pairs:", itemPairs);
+
+    // Reconstruct items from database
+    const items = [];
+    for (const pair of itemPairs) {
+      const [productId, quantityStr] = pair.split(":");
+      const quantity = parseInt(quantityStr) || 1;
+
+      try {
+        const product = await Product.findById(productId).lean();
+        if (product) {
+          // Get the price from line items (which includes markup)
+          const lineItem = session.line_items?.data?.find((li: any) =>
+            li.description?.includes(product.title)
+          );
+
+          items.push({
+            productId: String(product._id),
+            title: product.title || "",
+            price: lineItem?.price?.unit_amount || product.price_amount || 0,
+            quantity: quantity,
+            image: product.image || (Array.isArray(product.images) ? product.images[0] : "") || "",
+            sku: product.sku || "",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching product:", productId, err);
+      }
+    }
+
+    const userId = session.metadata?.userId === "guest" ? null : session.metadata?.userId;
+
     console.log("User ID:", userId);
-    console.log("Items:", items.length);
+    console.log("Items reconstructed:", items.length);
+
+    // Reconstruct shipping address from separate fields
+    const shippingAddress = {
+      name: session.metadata?.shipName || "",
+      line1: session.metadata?.shipLine1 || "",
+      line2: session.metadata?.shipLine2 || "",
+      city: session.metadata?.shipCity || "",
+      state: session.metadata?.shipState || "",
+      postalCode: session.metadata?.shipZip || "",
+      country: session.metadata?.shipCountry || "US",
+    };
 
     // Create order in database
     const order = await Order.create({
       userId: userId,
       email: session.metadata?.email || session.customer_email,
-      items: items.map((item: any) => ({
-        productId: item.productId,
-        title: item.title,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image || "",
-        sku: item.sku || "",
-      })),
-      shippingAddress: {
-        name: shippingAddress.name || "",
-        line1: shippingAddress.line1 || "",
-        line2: shippingAddress.line2 || "",
-        city: shippingAddress.city || "",
-        state: shippingAddress.state || "",
-        postalCode: shippingAddress.postalCode || "",
-        country: shippingAddress.country || "US",
-      },
+      items: items,
+      shippingAddress: shippingAddress,
       subtotal: parseInt(session.metadata?.subtotal || "0"),
       shipping: parseInt(session.metadata?.shipping || "0"),
       tax: parseInt(session.metadata?.tax || "0"),

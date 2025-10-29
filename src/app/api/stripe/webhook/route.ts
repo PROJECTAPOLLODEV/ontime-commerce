@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { dbConnect } from "@/lib/db";
 import Order from "@/models/Order";
 import Cart from "@/models/Cart";
+import Product from "@/models/Product";
 
 export const dynamic = "force-dynamic"; // ensure no caching
 export const runtime = "nodejs";        // Stripe SDK needs Node runtime
@@ -27,32 +28,52 @@ export async function POST(req: NextRequest) {
 
       console.log("Processing checkout session:", session.id);
 
-      // Parse metadata
-      const items = JSON.parse(session.metadata.items || "[]");
-      const shippingAddress = JSON.parse(session.metadata.shippingAddress || "{}");
+      // Parse compact items format: "productId:quantity,productId:quantity,..."
+      const itemsCompact = session.metadata.itemsCompact || "";
+      const itemPairs = itemsCompact.split(",").filter(Boolean);
+
+      // Reconstruct items from database
+      const items = [];
+      for (const pair of itemPairs) {
+        const [productId, quantityStr] = pair.split(":");
+        const quantity = parseInt(quantityStr) || 1;
+
+        try {
+          const product = await Product.findById(productId).lean();
+          if (product) {
+            items.push({
+              productId: String(product._id),
+              title: product.title || "",
+              price: product.price_amount || 0,
+              quantity: quantity,
+              image: product.image || (Array.isArray(product.images) ? product.images[0] : "") || "",
+              sku: product.sku || "",
+            });
+          }
+        } catch (err) {
+          console.error("Error fetching product in webhook:", productId, err);
+        }
+      }
+
       const userId = session.metadata.userId === "guest" ? null : session.metadata.userId;
+
+      // Reconstruct shipping address from separate fields
+      const shippingAddress = {
+        name: session.metadata.shipName || "",
+        line1: session.metadata.shipLine1 || "",
+        line2: session.metadata.shipLine2 || "",
+        city: session.metadata.shipCity || "",
+        state: session.metadata.shipState || "",
+        postalCode: session.metadata.shipZip || "",
+        country: session.metadata.shipCountry || "US",
+      };
 
       // Create order in database
       const order = await Order.create({
         userId: userId,
         email: session.metadata.email || session.customer_email,
-        items: items.map((item: any) => ({
-          productId: item.productId,
-          title: item.title,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image || "",
-          sku: item.sku || "",
-        })),
-        shippingAddress: {
-          name: shippingAddress.name || "",
-          line1: shippingAddress.line1 || "",
-          line2: shippingAddress.line2 || "",
-          city: shippingAddress.city || "",
-          state: shippingAddress.state || "",
-          postalCode: shippingAddress.postalCode || "",
-          country: shippingAddress.country || "US",
-        },
+        items: items,
+        shippingAddress: shippingAddress,
         subtotal: parseInt(session.metadata.subtotal || "0"),
         shipping: parseInt(session.metadata.shipping || "0"),
         tax: parseInt(session.metadata.tax || "0"),
