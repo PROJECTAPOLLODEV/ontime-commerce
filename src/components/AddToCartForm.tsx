@@ -2,18 +2,29 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CallForPricingModal from "./CallForPricingModal";
 
 interface AddToCartFormProps {
   productId: string;
+  callForPricing?: boolean;
+  productTitle?: string;
 }
 
-export default function AddToCartForm({ productId }: AddToCartFormProps) {
+export default function AddToCartForm({ productId, callForPricing, productTitle }: AddToCartFormProps) {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const router = useRouter();
 
   const handleAddToCart = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // If this is a call for pricing product, show the modal instead
+    if (callForPricing) {
+      setShowPricingModal(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -93,6 +104,18 @@ export default function AddToCartForm({ productId }: AddToCartFormProps) {
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
                 <span>Adding...</span>
               </>
+            ) : callForPricing ? (
+              <>
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  />
+                </svg>
+                <span>Contact for Pricing</span>
+              </>
             ) : (
               <>
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,23 +130,31 @@ export default function AddToCartForm({ productId }: AddToCartFormProps) {
               </>
             )}
           </button>
-          <button
-            type="button"
-            onClick={() => router.push("/checkout")}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary bg-background px-6 py-3 text-base font-semibold text-primary shadow-sm transition-all hover:bg-primary hover:text-primary-foreground"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            <span>Buy Now</span>
-          </button>
+          {!callForPricing && (
+            <button
+              type="button"
+              onClick={() => router.push("/checkout")}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary bg-background px-6 py-3 text-base font-semibold text-primary shadow-sm transition-all hover:bg-primary hover:text-primary-foreground"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              <span>Buy Now</span>
+            </button>
+          )}
         </div>
       </form>
+
+      <CallForPricingModal
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
+        productTitle={productTitle}
+      />
 
       {/* Features */}
       <div className="grid gap-3 rounded-lg border bg-muted/30 p-4 text-sm sm:grid-cols-2">

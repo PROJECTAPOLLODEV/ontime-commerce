@@ -12,6 +12,7 @@ const ProductSchema = new Schema(
     // prices in cents
     price_amount: { type: Number, default: 0 },
     compare_at_amount: { type: Number, default: 0 },
+    callForPricing: { type: Boolean, default: false },
 
     // Canonical image the UI should use first
     image: { type: String },

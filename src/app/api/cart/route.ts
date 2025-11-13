@@ -82,6 +82,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Product not found" }, { status: 404 });
     }
 
+    // Check if product is call for pricing - should not be added to cart
+    if (p.callForPricing) {
+      return NextResponse.json(
+        { ok: false, error: "This product requires contacting us for pricing" },
+        { status: 400 }
+      );
+    }
+
     const idx = cart.items.findIndex((i: any) => String(i.productId) === String(productId));
 
     // Get markup and apply it to the price

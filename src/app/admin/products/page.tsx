@@ -11,6 +11,7 @@ interface Product {
   category?: string;
   price_amount: number;
   compare_at_amount?: number;
+  callForPricing?: boolean;
   image?: string;
   images?: string[];
   clover_no?: string;
@@ -34,6 +35,7 @@ export default function AdminProducts() {
     category: "",
     price_amount: "",
     compare_at_amount: "",
+    callForPricing: false,
     image: "",
     images: "",
     clover_no: "",
@@ -59,10 +61,10 @@ export default function AdminProducts() {
     e.preventDefault();
     const payload = {
       ...formData,
-      price_amount: Number(formData.price_amount) * 100, // convert to cents
-      compare_at_amount: formData.compare_at_amount
+      price_amount: formData.callForPricing ? 0 : Number(formData.price_amount) * 100, // convert to cents
+      compare_at_amount: formData.callForPricing ? 0 : (formData.compare_at_amount
         ? Number(formData.compare_at_amount) * 100
-        : 0,
+        : 0),
       images: formData.images ? formData.images.split(",").map((s) => s.trim()) : [],
     };
 
@@ -87,6 +89,7 @@ export default function AdminProducts() {
         category: "",
         price_amount: "",
         compare_at_amount: "",
+        callForPricing: false,
         image: "",
         images: "",
         clover_no: "",
@@ -115,6 +118,7 @@ export default function AdminProducts() {
       compare_at_amount: product.compare_at_amount
         ? (product.compare_at_amount / 100).toString()
         : "",
+      callForPricing: product.callForPricing || false,
       image: product.image || "",
       images: product.images?.join(", ") || "",
       clover_no: product.clover_no || "",
@@ -183,6 +187,25 @@ export default function AdminProducts() {
     }
   };
 
+  const handleCallForPricingToggle = async (id: string, currentValue: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callForPricing: !currentValue }),
+      });
+
+      if (res.ok) {
+        loadProducts();
+      } else {
+        const error = await res.text();
+        alert(`Error updating call for pricing: ${error}`);
+      }
+    } catch (err) {
+      alert(`Error: ${err}`);
+    }
+  };
+
   const cancelEdit = () => {
     setFormData({
       title: "",
@@ -192,6 +215,7 @@ export default function AdminProducts() {
       category: "",
       price_amount: "",
       compare_at_amount: "",
+      callForPricing: false,
       image: "",
       images: "",
       clover_no: "",
@@ -287,17 +311,32 @@ export default function AdminProducts() {
                 />
               </div>
 
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.callForPricing}
+                    onChange={(e) => setFormData({ ...formData, callForPricing: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium">
+                    Call for Pricing (Hide price and show contact info instead)
+                  </span>
+                </label>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium">
-                  Price ($) <span className="text-red-500">*</span>
+                  Price ($) {!formData.callForPricing && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="number"
                   step="0.01"
-                  required
+                  required={!formData.callForPricing}
+                  disabled={formData.callForPricing}
                   value={formData.price_amount}
                   onChange={(e) => setFormData({ ...formData, price_amount: e.target.value })}
-                  className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+                  className="mt-1 w-full rounded-md border bg-background px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -306,11 +345,12 @@ export default function AdminProducts() {
                 <input
                   type="number"
                   step="0.01"
+                  disabled={formData.callForPricing}
                   value={formData.compare_at_amount}
                   onChange={(e) =>
                     setFormData({ ...formData, compare_at_amount: e.target.value })
                   }
-                  className="mt-1 w-full rounded-md border bg-background px-3 py-2"
+                  className="mt-1 w-full rounded-md border bg-background px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -418,6 +458,7 @@ export default function AdminProducts() {
               <th className="px-4 py-3 text-left font-medium">Brand</th>
               <th className="px-4 py-3 text-left font-medium">Price</th>
               <th className="px-4 py-3 text-left font-medium">Item No.</th>
+              <th className="px-4 py-3 text-center font-medium">Call Pricing</th>
               <th className="px-4 py-3 text-right font-medium">Actions</th>
             </tr>
           </thead>
@@ -437,7 +478,11 @@ export default function AdminProducts() {
                 <td className="px-4 py-3 text-muted-foreground">{p.brand || "—"}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    {editingPrice[p._id] !== undefined ? (
+                    {p.callForPricing ? (
+                      <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        Call for Pricing
+                      </span>
+                    ) : editingPrice[p._id] !== undefined ? (
                       <>
                         <span className="text-xs">$</span>
                         <input
@@ -490,6 +535,19 @@ export default function AdminProducts() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{p.clover_no || "—"}</td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-center">
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={p.callForPricing || false}
+                        onChange={() => handleCallForPricingToggle(p._id, p.callForPricing || false)}
+                        className="peer sr-only"
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 dark:bg-gray-700 dark:after:border-gray-600"></div>
+                    </label>
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
                     <button

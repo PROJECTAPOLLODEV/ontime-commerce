@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import CallForPricingModal from "./CallForPricingModal";
 
 interface ProductCardProps {
   product: {
@@ -9,6 +10,7 @@ interface ProductCardProps {
     title: string;
     slug?: string;
     price_amount: number;
+    callForPricing?: boolean;
     image?: string;
     images?: string[];
   };
@@ -16,6 +18,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const [adding, setAdding] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
 
   const imgSrc =
     product.image ||
@@ -25,6 +28,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation();
+
+    // If this is a call for pricing product, show the modal instead
+    if (product.callForPricing) {
+      setShowPricingModal(true);
+      return;
+    }
 
     setAdding(true);
 
@@ -79,12 +88,18 @@ export default function ProductCard({ product }: ProductCardProps) {
         </Link>
 
         <div className="mt-auto flex items-center justify-between">
-          <span className="text-lg font-bold">
-            ${((product.price_amount ?? 0) / 100).toFixed(2)}
-          </span>
+          {product.callForPricing ? (
+            <span className="rounded bg-primary/10 px-2 py-1 text-sm font-semibold text-primary">
+              Call for Pricing
+            </span>
+          ) : (
+            <span className="text-lg font-bold">
+              ${((product.price_amount ?? 0) / 100).toFixed(2)}
+            </span>
+          )}
         </div>
 
-        {/* Add to Cart Button - NOT inside Link */}
+        {/* Add to Cart Button / Contact Button - NOT inside Link */}
         <button
           onClick={handleAddToCart}
           disabled={adding}
@@ -92,9 +107,15 @@ export default function ProductCard({ product }: ProductCardProps) {
             adding ? "bg-green-600" : "bg-primary hover:opacity-90"
           }`}
         >
-          {adding ? "✓ Added!" : "Add to Cart"}
+          {adding ? "✓ Added!" : product.callForPricing ? "Contact for Pricing" : "Add to Cart"}
         </button>
       </div>
+
+      <CallForPricingModal
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
+        productTitle={product.title}
+      />
     </div>
   );
 }

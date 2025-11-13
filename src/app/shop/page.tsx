@@ -83,6 +83,7 @@ export default async function ShopPage({
     title: p.title || "",
     slug: p.slug || "",
     price_amount: applyMarkup(p.price_amount || 0, mp),
+    callForPricing: p.callForPricing || false,
     image: p.image || "",
     images: Array.isArray(p.images) ? p.images : [],
     brand: p.brand || "",

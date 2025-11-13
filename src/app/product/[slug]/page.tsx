@@ -100,19 +100,28 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Price and Stock */}
             <div className="rounded-xl border bg-gradient-to-br from-primary/5 to-background p-6">
-              <div className="flex items-baseline gap-3">
-                <div className="text-4xl font-bold text-primary">${(price / 100).toFixed(2)}</div>
-                {formerPrice > price && (
-                  <>
-                    <div className="text-lg text-muted-foreground line-through">
-                      ${(formerPrice / 100).toFixed(2)}
-                    </div>
-                    <div className="rounded-full bg-green-600 px-2 py-1 text-xs font-bold text-white">
-                      SAVE {Math.round(((formerPrice - price) / formerPrice) * 100)}%
-                    </div>
-                  </>
-                )}
-              </div>
+              {product.callForPricing ? (
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl font-bold text-primary">Call for Pricing</div>
+                  <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    Contact Us
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-3">
+                  <div className="text-4xl font-bold text-primary">${(price / 100).toFixed(2)}</div>
+                  {formerPrice > price && (
+                    <>
+                      <div className="text-lg text-muted-foreground line-through">
+                        ${(formerPrice / 100).toFixed(2)}
+                      </div>
+                      <div className="rounded-full bg-green-600 px-2 py-1 text-xs font-bold text-white">
+                        SAVE {Math.round(((formerPrice - price) / formerPrice) * 100)}%
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Stock Status */}
               <div className="mt-4 flex items-center gap-2">
@@ -129,7 +138,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
 
             {/* Add to Cart Form */}
-            <AddToCartForm productId={String(product._id)} />
+            <AddToCartForm
+              productId={String(product._id)}
+              callForPricing={product.callForPricing}
+              productTitle={product.title}
+            />
 
             {/* Product Attributes */}
             {Array.isArray(product.attributes) && product.attributes.length > 0 && (
